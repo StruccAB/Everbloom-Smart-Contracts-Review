@@ -1,45 +1,62 @@
 import Everbloom from "../../contracts/Everbloom.cdc"
 import ArtworkMetadata from "../../contracts/ArtworkMetadata.cdc"
 
-transaction {
+// Transaction to create a new Artwork resource in Gallery resource
+
+transaction (
+  galleryID: UInt32,
+  externalPostID: String,
+  creator: {String: String},
+  content: {String: String},
+  attributes: {String: String},
+  additionalMetadata: {String: String}
+  ) {
   let userRef: &Everbloom.User
   let galleryRef: &Everbloom.Gallery
+  let ownerAddress: Address;
 
   prepare(acct: AuthAccount) {
     self.userRef = acct.borrow<&Everbloom.User>(from: Everbloom.UserStoragePath)
             ?? panic("Could not borrow a reference to the user")
 
     let galleries: [UInt32] = self.userRef.getAllGalleries()
-    self.galleryRef = self.userRef.borrowGallery(galleryID: galleries.removeFirst())
-        ?? panic("Could not borrow a reference to the gallery")
+    self.galleryRef = self.userRef.borrowGallery(galleryID: galleryID)
+      ?? panic("Could not borrow a reference to the gallery")
+    self.ownerAddress = acct.address
   }
 
   execute {
-    let creator: ArtworkMetadata.Creator = ArtworkMetadata.Creator(
-      name: "John Doe",
-      bio: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
-      address: 0x01,
-      externalLink: nil
+    var metadata: {String: AnyStruct} = additionalMetadata
+    let creatorStructData = ArtworkMetadata.Creator(
+      name: creator["name"] ?? panic("creator name is required"),
+      bio: creator["bio"] ?? panic("creator bio is required"),
+      address: self.ownerAddress,
+      externalLink: creator["externalLink"] as String?
     )
-    let content: ArtworkMetadata.Content = ArtworkMetadata.Content(
-      name: "Mona Lipa",
-      description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
-      image: "https://example.com/mona-lip.png",
-      thumbnail: "https://example.com/mona-lipa-thumbnai.png",
-      animation: "https://example.com/mona-lipa.mp4",
-      externalLink: nil
+    let contentStructData: ArtworkMetadata.Content = ArtworkMetadata.Content(
+      name: content["name"] ?? panic("content name is required"),
+      description: content["description"] ?? panic("content description is required"),
+      image: content["image"] ?? panic("content image is required"),
+      thumbnail: content["thumbnail"] ?? panic("content thumbnail is required"),
+      animation: content["animation"] as String?,
+      externalLink: content["externalLink"] as String?
     )
-    let attributes: [ArtworkMetadata.Attribute] = []
+    let attributeStructArray: [ArtworkMetadata.Attribute] = []
 
-    let metadata: {String: AnyStruct} = {
-      "creator": creator,
-      "content": content,
-      "attributes": attributes,
-      "additional 1": [{"z": "3"}],
-      "additional 2": {"x": "1"}
+    for traitType in attributes.keys {
+      attributeStructArray.append(ArtworkMetadata.Attribute(
+        traitType: traitType,
+        value: attributes[traitType]  ?? panic("value is missing in attributes")
+      ))
     }
+
+    metadata.insert(key: "creator", creatorStructData)
+    metadata.insert(key: "content", contentStructData)
+    metadata.insert(key: "attributes", attributeStructArray)
+
+    log (metadata)
     self.galleryRef.createArtwork(
-      externalPostID: "external-post-id",
+      externalPostID: externalPostID,
       metadata: metadata
     )
   }
