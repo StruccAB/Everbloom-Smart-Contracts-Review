@@ -1,0 +1,35 @@
+{
+  "name": "everbloom-smart-contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts of Everbloom.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:cov": "jest --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/StruccAB/Everbloom-Smart-Contracts.git"
+  },
+  "author": "Shehryar",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/StruccAB/Everbloom-Smart-Contracts/issues"
+  },
+  "homepage": "https://github.com/StruccAB/Everbloom-Smart-Contracts#readme",
+  "dependencies": {
+    "@onflow/types": "^0.0.5"
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.15.5",
+    "@babel/preset-env": "^7.15.6",
+    "babel-jest": "^27.2.1",
+    "flow-js-testing": "^0.1.13",
+    "jest": "^27.2.1",
+    "jest-environment-node": "^27.2.0"
+  },
+  "keywords": []
+}
