@@ -2,16 +2,16 @@ pub contract ArtworkMetadata {
 	pub struct Creator {
 		pub let name: String
 		pub let bio: String
-        // Creator Flow Address
+		// Creator Flow Address
 		pub let address: Address
-        // Link to Everbloom profile
-        pub let externalLink: String?
+		// Link to Everbloom profile
+		pub let externalLink: String?
 
 		init(name: String, bio: String, address: Address, externalLink: String?) {
 			self.name = name
 			self.bio = bio
 			self.address = address
-            self.externalLink = externalLink
+			self.externalLink = externalLink
 		}
 	}
 
@@ -25,30 +25,30 @@ pub contract ArtworkMetadata {
 		}
 	}
 
-    pub struct Content {
-        pub let name: String
-        pub let description: String
-        // Link to the image
-        pub let image: String
-        pub let thumbnail: String
-        pub let animation: String?
-        // Link to Everbloom Post
-        pub let externalLink: String?
+	pub struct Content {
+		pub let name: String
+		pub let description: String
+		// Link to the image
+		pub let image: String
+		pub let thumbnail: String
+		pub let animation: String?
+		// Link to Everbloom Post
+		pub let externalLink: String?
 
-        init (
-            name: String,
-            description: String,
-            image: String,
-            thumbnail: String,
-            animation: String?,
-            externalLink: String?
-        ) {
-            self.name = name
-            self.description = description
-            self.image = image
-            self.thumbnail = thumbnail
-            self.animation = animation
-            self.externalLink = externalLink
-        }
-    }
+		init (
+			name: String,
+			description: String,
+			image: String,
+			thumbnail: String,
+			animation: String?,
+			externalLink: String?
+		) {
+			self.name = name
+			self.description = description
+			self.image = image
+			self.thumbnail = thumbnail
+			self.animation = animation
+			self.externalLink = externalLink
+		}
+	}
 }

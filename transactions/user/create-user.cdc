@@ -1,5 +1,8 @@
 import Everbloom from "../../contracts/Everbloom.cdc"
 
+// Transaction to create a new User resource and store it in user storage.
+// This transaction also exposes the public capability of the user
+
 transaction {
   let userRef: &Everbloom.User
 
