@@ -7,6 +7,7 @@
     "test:cov": "jest --coverage"
   },
   "author": "Shehryar@Everbloom",
+  "license": "MIT",
   "dependencies": {
     "@onflow/types": "^0.0.5"
   },
