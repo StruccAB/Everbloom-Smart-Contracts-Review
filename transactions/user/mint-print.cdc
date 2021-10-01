@@ -7,9 +7,9 @@ transaction (galleryID: UInt32, artworkID: UInt32, editionID: UInt32, signature:
   let userRef: &Everbloom.User
 
   prepare(acct: AuthAccount) {
-    self.userRef = acct.borrow<&Everbloom.User>(from: /storage/EverbloomUser)
+    self.userRef = acct.borrow<&Everbloom.User>(from: Everbloom.UserStoragePath)
         ?? panic("Could not borrow a reference to the user")
-    self.collectionRef = acct.borrow<&Everbloom.Collection>(from: /storage/EverbloomCollection)
+    self.collectionRef = acct.borrow<&Everbloom.Collection>(from: Everbloom.CollectionStoragePath)
         ?? panic("Could not borrow a reference to the collection")
   }
 
