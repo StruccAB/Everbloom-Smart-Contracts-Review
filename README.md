@@ -40,6 +40,9 @@ Everbloom was founded with the mission of enabling anyone to express themselves 
 5. Create an `Edition` struct instance inside `Art` resource
 6. Mint a `Print` (NFT) under an edition in an Art
 
+### Collection Setup
+1. Execute `setup-collection.cdc` transaction
+
 ## Deployment on Emulator
 
 1. Start the emulator: ```$ flow emulator start```
