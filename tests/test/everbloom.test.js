@@ -43,7 +43,7 @@ jest.setTimeout(10000);
 
 describe("everbloom", ()=>{
   beforeAll(async () => {
-    const basePath = path.resolve(__dirname, "../../../Everbloom-Smart-Contracts");
+    const basePath = path.resolve(__dirname, "../../../Everbloom-Smart-Contracts-Review");
 		// You can specify different port to parallelize execution of describe blocks
     const port = 8080;
 		// Setting logging flag to true will pipe emulator output to console
