@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /*
 	Description: Central Smart Contract for Everbloom
 	Authors: Shehryar Shoukat shehryar@everbloom.app

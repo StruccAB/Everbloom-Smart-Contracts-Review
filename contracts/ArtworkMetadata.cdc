@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+
+// This contracts contains Metadata structs for Artwork metadata
+
 pub contract ArtworkMetadata {
 	pub struct Creator {
 		pub let name: String
