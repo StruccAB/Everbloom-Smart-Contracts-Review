@@ -105,6 +105,12 @@ pub contract Everbloom: NonFungibleToken {
 	pub let UserStoragePath: StoragePath
 	pub let UserPublicPath: PublicPath
 
+	// Maximum Limit Constants
+	// Maximum number of Arts that can be added in a Gallery
+	pub let maxArtLimit: UInt16
+	// Maximum number of Editions that can be created in an Art
+	pub let maxEditionLimit: UInt16
+
 	// Every time an Edition is created, editionID is assigned
 	// to the new Edition's editionID and then is incremented by 1.
 	pub var nextEditionID: UInt32
@@ -343,6 +349,11 @@ pub contract Everbloom: NonFungibleToken {
 			return editionID
 		*/
 		pub fun createEdition(name: String): UInt32 {
+			pre {
+				self.editions.length < Int(Everbloom.maxEditionLimit):
+				"Cannot add create edition. Maximum number of editions in arts is ".concat(Everbloom.maxEditionLimit.toString())
+			}
+
 			let newEdition: Edition = Edition(artworkID: self.artworkID, name: name)
 
 			emit EditionCreated(editionID: newEdition.editionID, name: name)
@@ -473,7 +484,9 @@ pub contract Everbloom: NonFungibleToken {
 		*/
 		pub fun createArtwork(externalPostID: String, metadata: {String: AnyStruct}): UInt32 {
 			pre {
-				!self.disabled: "Cannot add create artwork from the Gallery after the gallery has been disabled."
+				!self.disabled: "Cannot add create artwork to the Gallery after the gallery has been disabled."
+				self.artworks.length < Int(Everbloom.maxArtLimit):
+				"Cannot add create artwork. Maximum number of Artworks in gallery is ".concat(Everbloom.maxArtLimit.toString())
 			}
 			// Create the new Artwork
 			var newArtwork: @Artwork <- create Artwork(galleryID: self.galleryID, externalPostID: externalPostID, metadata: metadata)
@@ -942,6 +955,8 @@ pub contract Everbloom: NonFungibleToken {
 		self.nextEditionID = 1
 		self.nextGalleryID = 1
 		self.nextUserID = 1
+		self.maxArtLimit = 10_000
+		self.maxEditionLimit = 10
 
 		// set contract paths
 		self.CollectionStoragePath = /storage/EverbloomCollection
