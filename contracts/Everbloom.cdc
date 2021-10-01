@@ -111,6 +111,12 @@ pub contract Everbloom: NonFungibleToken {
 	pub let maxArtLimit: UInt16
 	// Maximum number of Editions that can be created in an Art
 	pub let maxEditionLimit: UInt16
+	// Maximum number of NFTs that can be mint in a batch
+	pub let maxBatchMintSize: UInt16
+	// Maximum number of NFTs that can be deposited in a batch
+	pub let maxBatchDepositSize: UInt16
+	// Maximum number of NFTs that can be withdrawn in a batch
+	pub let maxBatchWithdrawalSize: UInt16
 
 	// Every time an Edition is created, editionID is assigned
 	// to the new Edition's editionID and then is incremented by 1.
@@ -678,6 +684,11 @@ pub contract Everbloom: NonFungibleToken {
 			return  @NonFungibleToken.Collection: collection of minted NFTs
 		*/
 		pub fun batchMintPrint(galleryID: UInt32, artworkID: UInt32, editionID: UInt32, signatures: [String]): @Collection {
+			pre {
+				signatures.length < Int(Everbloom.maxBatchMintSize):
+				"Maximum number of NFT that can be minted in a batch is ".concat(Everbloom.maxBatchMintSize.toString())
+			}
+
 			let newCollection <- create Collection()
 
 			for signature in signatures {
@@ -817,6 +828,11 @@ pub contract Everbloom: NonFungibleToken {
 			Returns: @NonFungibleToken.Collection: A collection that contains the withdrawn print
 		*/
 		pub fun batchWithdraw(ids: [UInt64]): @NonFungibleToken.Collection {
+			pre {
+				ids.length < Int(Everbloom.maxBatchWithdrawalSize):
+				"Maximum number of NFT that can be withdraw in a batch is ".concat(Everbloom.maxBatchWithdrawalSize.toString())
+			}
+
 			// Create a new empty Collection
 			var batchCollection <- create Collection()
 
@@ -858,6 +874,10 @@ pub contract Everbloom: NonFungibleToken {
 		// batchDeposit takes a Collection object as an argument
 		// and deposits each contained NFT into this Collection
 		pub fun batchDeposit(tokens: @NonFungibleToken.Collection) {
+			pre {
+				tokens.getIDs().length < Int(Everbloom.maxBatchDepositSize):
+				"Maximum number of NFT that can be deposited in a batch is ".concat(Everbloom.maxBatchDepositSize.toString())
+			}
 
 			// Get an array of the IDs to be deposited
 			let keys = tokens.getIDs()
@@ -958,6 +978,9 @@ pub contract Everbloom: NonFungibleToken {
 		self.nextUserID = 1
 		self.maxArtLimit = 10_000
 		self.maxEditionLimit = 10
+		self.maxBatchMintSize = 10_000
+		self.maxBatchDepositSize = 10_000
+		self.maxBatchWithdrawalSize = 10_000
 
 		// set contract paths
 		self.CollectionStoragePath = /storage/EverbloomCollection
