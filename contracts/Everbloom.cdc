@@ -5,8 +5,8 @@
 
 	This contract contains the core functionality of Everbloom DApp
 
-	The contract manages the data associated with all the galleries, and
-	artworks that are used as templates for the Print NFTs.
+	The contract manages the data associated with all the galleries,
+	artworks, and editions that are used as templates for the Print NFTs.
 
 	First, the user will create a "User" resource instance and will store
 	it in user storage. User resource needs minter resource capability to
@@ -18,17 +18,19 @@
 	Gallery resource allows users to create multiple Artwork resources; It
 	can be enabled and disabled. A disabled gallery cannot add new artwork.
 
-	Artwork resource contains the ArtworkData struct. Artwork resource object
-	and a copy of its ArtworkData struct are stored gallery resource objects.
-	Artwork can be marked as completed, which will prevent further minting of
-	NFTs under the artwork.
+	Artwork resource contains the ArtworkData struct and editions struct
+	array. Artwork resource object and a copy of its ArtworkData struct are
+	stored gallery resource objects. Artwork resources can create multiple
+	editions. Artwork can be locked, which will prevent the addition of new
+	editions. Users can mark the edition as completed, which will prevent
+	further minting of NFTs under the edition.
 
 	Admin resource can create a new admin and minter resource. The minter
 	resource will be saved in admin storage to share private capability.
 	Only minter resources can mint an NFT.
 
 	The user resource can mint an NFT if it has a minting capability.
-	Minting a "print" requires gallery, and artwork.
+	Minting a "print" requires gallery, artwork, and edition.
 
 	Note: All state changing functions will panic if an invalid argument is
 	provided or one of its pre-conditions or post conditions aren't met.
@@ -57,6 +59,7 @@ pub contract Everbloom: NonFungibleToken {
 	// Emitted when an NFT (print) is minted
 	pub event PrintNFTMinted(
 		nftID: UInt64,
+		editionID: UInt32,
 		artworkID: UInt32,
 		galleryID: UInt32,
 		serialNumber: UInt32,
@@ -75,12 +78,18 @@ pub contract Everbloom: NonFungibleToken {
 	)
 	// Emitted when a Gallery is created
 	pub event GalleryCreated(galleryID: UInt32, name: String)
-	// Emitted when an artwork is marked as completed
-	pub event ArtworkCompleted(artworkID: UInt32, numOfArtworks: UInt32)
+	// Emitted when an Edition is created
+	pub event EditionCreated(editionID: UInt32, name: String)
+	// Emitted when an Edition is added to Artwork
+	pub event EditionAddedToArtwork(editionID: UInt32, artworkID: UInt32)
+	// Emitted when an Edition is marked as completed
+	pub event ArtworkEditionCompleted(editionID: UInt32, artworkID: UInt32, numOfArtworks: UInt32)
 	// Emitted when a Gallery is disabled
 	pub event GalleryDisabled(galleryID: UInt32)
 	// Emitted when a Gallery is enabled
 	pub event GalleryEnabled(galleryID: UInt32)
+	// Emitted when an Artwork is locked
+	pub event ArtworkLocked(artworkID: UInt32)
 	// Emitted when a user is created
 	pub event UserCreated(userID: UInt64)
 
@@ -100,6 +109,8 @@ pub contract Everbloom: NonFungibleToken {
 	// Maximum Limit Constants
 	// Maximum number of Arts that can be added in a Gallery
 	pub let maxArtLimit: UInt16
+	// Maximum number of Editions that can be created in an Art
+	pub let maxEditionLimit: UInt16
 	// Maximum number of NFTs that can be mint in a batch
 	pub let maxBatchMintSize: UInt16
 	// Maximum number of NFTs that can be deposited in a batch
@@ -107,6 +118,9 @@ pub contract Everbloom: NonFungibleToken {
 	// Maximum number of NFTs that can be withdrawn in a batch
 	pub let maxBatchWithdrawalSize: UInt16
 
+	// Every time an Edition is created, editionID is assigned
+	// to the new Edition's editionID and then is incremented by 1.
+	pub var nextEditionID: UInt32
 	// Every time an Artwork is created, artworkID is assigned
 	// to the new Artwork's artworkID and then is incremented by 1.
 	pub var nextArtworkID: UInt32
@@ -130,6 +144,7 @@ pub contract Everbloom: NonFungibleToken {
 
 	// PrintData is a Struct that holds metadata associated with Print NFT
 	pub struct PrintData {
+		pub let editionID: UInt32
 		pub let artworkID: UInt32
 		pub let galleryID: UInt32
 		pub let serialNumber: UInt32
@@ -138,11 +153,13 @@ pub contract Everbloom: NonFungibleToken {
 		init(
 			galleryID: UInt32,
 			artworkID: UInt32,
+			editionID: UInt32,
 			serialNumber: UInt32,
 			signature: String
 		) {
 			self.galleryID = galleryID
 			self.artworkID = artworkID
+			self.editionID = editionID
 			self.serialNumber = serialNumber
 			self.signature = signature
 		}
@@ -153,11 +170,12 @@ pub contract Everbloom: NonFungibleToken {
 		// Global unique Artwork ID
 		pub let id: UInt64
 		// Struct of ArtworkData metadata
-		access(self) let data: PrintData
+		pub let data: PrintData
 
 		init(
 			galleryID: UInt32,
 			artworkID: UInt32,
+			editionID: UInt32,
 			serialNumber: UInt32,
 			signature: String
 		) {
@@ -167,12 +185,14 @@ pub contract Everbloom: NonFungibleToken {
 			self.data = PrintData(
 				galleryID: galleryID,
 				artworkID: artworkID,
+				editionID: editionID,
 				serialNumber: serialNumber,
 				signature: signature
 			)
 
 			emit PrintNFTMinted(
 				nftID: self.id,
+				editionID: self.data.editionID,
 				artworkID: self.data.artworkID,
 				galleryID: self.data.galleryID,
 				serialNumber: self.data.serialNumber,
@@ -180,14 +200,30 @@ pub contract Everbloom: NonFungibleToken {
 			)
 		}
 
-		pub fun getMetadata(): PrintData {
-            return self.data
-		}
-
 		destroy() {
 			emit PrintNFTDestroyed(nftID: self.id)
 		}
 	}
+
+	// Edition is struct that groups multiple Prints in a Artwork resource
+	pub struct Edition {
+		pub let editionID: UInt32
+		pub let artworkID: UInt32
+		pub let name: String
+
+		init(artworkID: UInt32, name: String) {
+			pre {
+				name.length > 0: "New Edition name cannot be empty"
+			}
+			self.editionID = Everbloom.nextEditionID
+			self.artworkID = artworkID
+			self.name = name
+
+			// Increment the nextEditionID so that it isn't used again
+			Everbloom.nextEditionID = Everbloom.nextEditionID + UInt32(1)
+		}
+	}
+
 	// ArtworkData holds the Metadata associated with an artwork
 	// Any user can borrow the artwork to read its metadata
 	pub struct ArtworkData {
@@ -220,6 +256,9 @@ pub contract Everbloom: NonFungibleToken {
 			self.attributes = attributes as! [ArtworkMetadata.Attribute]
 			self.additionalMetadata = metadata
 			self.externalPostID = externalPostID
+
+			// Increment the ID so that it isn't used again
+			Everbloom.nextArtworkID = Everbloom.nextArtworkID + UInt32(1)
 		}
 
 		pub fun getContent(): ArtworkMetadata.Content {
@@ -242,27 +281,42 @@ pub contract Everbloom: NonFungibleToken {
 	// ArtworkPublic Interface is the public interface of Artwork
 	// Any user can borrow the public reference of Artwork resource
 	pub resource interface ArtworkPublic {
+		pub fun getAllEditions(): [UInt32]
+		pub fun getEditionData(editionID: UInt32): Edition?
+		pub fun getEditionNftCount(editionID: UInt32): UInt32
 		pub fun getArtworkData(): ArtworkData
+		pub fun isLocked(): Bool
 	}
 
-	/* Representation of Artwork resource. Artwork resource groups prints
+	/* Representation of Artwork resource. Artwork resource groups prints by
+	   editions. It contains metadata of artwork and number of NFTs minted in a edition.
 
-		Artwork resource contains metadata of the artwork
+		Artwork resource contains methods for addition of new editions, locking artwork,
+		and marking edition as completed
 
 	   A Post on Everbloom platform represent an Artwork
 	*/
 	pub resource Artwork: ArtworkPublic {
 		pub let galleryID: UInt32
 		pub let artworkID: UInt32
-		access(contract) let data: ArtworkData
+		// When artwork is locked no new edition can be added
+		pub var locked: Bool
+		pub let data: ArtworkData
+		// editions is a dictionary that stores editions data against their editionID
+		access(contract) let editions: {UInt32: Edition}
+		// editions is a dictionary that stores edition completion data
+		access(contract) let editionCompleted: {UInt32: Bool}
+		// numberMintedPerEdition holds number of prints minted against editionID
+		access(contract) let numberMintedPerEdition: {UInt32: UInt32}
 
 		init(galleryID: UInt32, externalPostID: String, metadata: {String: AnyStruct}) {
 			self.artworkID = Everbloom.nextArtworkID
 			self.galleryID = galleryID
+			self.editions = {}
+			self.editionCompleted = {}
+			self.locked = false
+			self.numberMintedPerEdition = {}
 			self.data = ArtworkData(galleryID: galleryID, externalPostID: externalPostID, metadata: metadata)
-
-            // Increment the ID so that it isn't used again
-            Everbloom.nextArtworkID = Everbloom.nextArtworkID + UInt32(1)
 
 			emit ArtworkCreated(
 				artworkID: self.artworkID,
@@ -277,6 +331,123 @@ pub contract Everbloom: NonFungibleToken {
 		pub fun getArtworkData(): ArtworkData {
 			return self.data
 		}
+
+		pub fun getAllEditions(): [UInt32] {
+			return self.editions.keys
+		}
+
+		pub fun getEditionData(editionID: UInt32): Edition? {
+
+			return self.editions[editionID]
+		}
+
+		pub fun getEditionNftCount(editionID: UInt32): UInt32 {
+			pre {
+				self.editions[editionID] != nil: "Edition does not exist"
+			}
+
+			return self.numberMintedPerEdition[editionID]!
+		}
+
+		access(contract) fun incrementEditionNftCount(editionID: UInt32): UInt32 {
+		    pre {
+                self.editions[editionID] != nil: "Edition does not exist"
+            }
+        	self.numberMintedPerEdition[editionID] = self.numberMintedPerEdition[editionID]! + UInt32(1)
+
+            return self.numberMintedPerEdition[editionID]!
+        }
+
+		/* This method creates new edition
+
+			parameter: name: name of the edition
+
+			return editionID
+		*/
+		pub fun createEdition(name: String): UInt32 {
+			pre {
+				self.editions.length < Int(Everbloom.maxEditionLimit):
+				"Cannot add create edition. Maximum number of editions in arts is ".concat(Everbloom.maxEditionLimit.toString())
+			}
+
+			let newEdition: Edition = Edition(artworkID: self.artworkID, name: name)
+
+			emit EditionCreated(editionID: newEdition.editionID, name: name)
+
+			self.addEdition(edition: newEdition)
+
+			return newEdition.editionID
+		}
+
+		/* This method adds new edition in artwork
+
+			parameter:  edition: Edition struct
+
+			Pre-Conditions:
+			edition should have editionID
+			artwork should not be locked
+			edition should not exist in artwork
+		*/
+		pub fun addEdition(edition: Edition) {
+			pre {
+				edition.editionID != nil: "Edition should have editionID"
+				!self.locked: "Cannot add the edition to the Artwork after the artwork has been locked."
+				self.numberMintedPerEdition[edition.editionID] == nil: "The edition has already beed added to the artwork."
+			}
+
+			self.editions[edition.editionID] = edition
+
+			// Set Edition to not completed
+			self.editionCompleted[edition.editionID] = false
+			// Initialize the mint count to zero
+			self.numberMintedPerEdition[edition.editionID] = 0
+
+			emit EditionAddedToArtwork(editionID: edition.editionID, artworkID: self.artworkID)
+		}
+
+		/* This method mark edition as completed
+
+			parameter:  editionID: id of the edition
+		*/
+		pub fun setEditionComplete(editionID: UInt32) {
+			pre {
+				self.editionCompleted[editionID] != nil: "Cannot set Edition to Complete: Edition doesn't exist in this Artwork!"
+			}
+
+			if !self.editionCompleted[editionID]! {
+				self.editionCompleted[editionID] = true
+
+				emit ArtworkEditionCompleted(editionID: editionID, artworkID: self.artworkID, numOfArtworks: self.numberMintedPerEdition[editionID]!)
+			}
+		}
+
+		// This method mark all edition of the artwork as completed
+		pub fun setAllEditionsComplete() {
+			for edition in self.editions.values {
+				self.setEditionComplete(editionID: edition.editionID)
+			}
+		}
+
+		pub fun isEditionCompleted(editionID: UInt32): Bool {
+			pre {
+				self.editionCompleted[editionID] != nil: "Edition doesn't exist."
+			}
+
+			return self.editionCompleted[editionID]!
+		}
+
+		pub fun isLocked(): Bool {
+			return self.locked
+		}
+
+		// This method locks the artwork
+		pub fun lock() {
+			if !self.locked {
+				self.locked = true
+
+				emit ArtworkLocked(artworkID: self.artworkID)
+			}
+		}
 	}
 
 	// GalleryPublic Interface is the public interface of Gallery
@@ -284,8 +455,6 @@ pub contract Everbloom: NonFungibleToken {
 	pub resource interface GalleryPublic {
 		pub fun getAllArtworks(): [UInt32]
 		pub fun borrowArtwork(artworkID: UInt32): &Artwork{Everbloom.ArtworkPublic}?
-		pub fun getArtworkNftCount(artworkID: UInt32): UInt32
-		pub fun isArtworkCompleted(artworkID: UInt32): Bool
 	}
 
 	/* Representation of Gallery resource. Gallery resource contains Artworks information.
@@ -302,10 +471,6 @@ pub contract Everbloom: NonFungibleToken {
 		// artworkDatas stores artwork metadata against artworkID
 		access(contract) let artworkDatas: {UInt32: ArtworkData}
 		// When gallery is disabled no new artwork can be added
-		// artworkCompleted is a dictionary that stores artwork completion data
-		access(contract) let artworkCompleted: {UInt32: Bool}
-		// numberMintedPerArtwork holds number of prints minted against artworkID
-		access(contract) let numberMintedPerArtwork: {UInt32: UInt32}
 		pub var disabled: Bool
 		// name of the gallery
 		pub var name: String
@@ -314,10 +479,12 @@ pub contract Everbloom: NonFungibleToken {
 			self.galleryID = Everbloom.nextGalleryID
 			self.artworks <- {}
 			self.artworkDatas = {}
-			self.artworkCompleted = {}
-			self.numberMintedPerArtwork = {}
 			self.disabled = false
 			self.name = name
+
+			Everbloom.nextGalleryID = Everbloom.nextGalleryID + UInt32(1)
+
+			emit GalleryCreated(galleryID: self.galleryID, name: self.name)
 		}
 
 		/* This method creates and add new artwork
@@ -348,51 +515,7 @@ pub contract Everbloom: NonFungibleToken {
 			return newID
 		}
 
-		pub fun getArtworkNftCount(artworkID: UInt32): UInt32 {
-			pre {
-				self.numberMintedPerArtwork[artworkID] != nil: "Artwork does not exist"
-			}
-
-			return self.numberMintedPerArtwork[artworkID]!
-		}
-
-		access(contract) fun incrementArtworkNftCount(artworkID: UInt32): UInt32 {
-		    pre {
-                self.numberMintedPerArtwork[artworkID] != nil: "Artwork does not exist"
-            }
-        	self.numberMintedPerArtwork[artworkID] = self.numberMintedPerArtwork[artworkID]! + UInt32(1)
-
-            return self.numberMintedPerArtwork[artworkID]!
-        }
-
-		/* This method mark artwork as completed
-
-			parameter:  artworkID
-		*/
-		access(contract) fun setArtworkComplete(artworkID: UInt32) {
-			pre {
-				self.artworkCompleted[artworkID] != nil: "Cannot set Artwork to Complete: Artwork doesn't exist"
-			}
-
-			if !self.artworkCompleted[artworkID]! {
-				self.artworkCompleted[artworkID] = true
-
-				emit ArtworkCompleted(artworkID: self.artworkID, numOfArtworks: self.numberMintedPerArtwork[artworkID]!)
-			}
-
-			// TODO: update contract artwork data
-		}
-
-		pub fun isArtworkCompleted(artworkID: UInt32): Bool {
-			pre {
-				self.artworkCompleted[artworkID] != nil: "Artwork doesn't exist."
-			}
-
-			return self.artworkCompleted[artworkID]!
-		}
-
 		// This method disables the gallery
-		// TODO: move this to contract level
 		pub fun disableGallery () {
 			if !self.disabled {
 				self.disabled = true
@@ -401,7 +524,6 @@ pub contract Everbloom: NonFungibleToken {
 		}
 
 		// This method enables the gallery
-		// TODO: move this to contract level
 		pub fun enableGallery () {
 			if self.disabled {
 				self.disabled = false
@@ -525,33 +647,30 @@ pub contract Everbloom: NonFungibleToken {
 			// Store it in the galleries mapping field
 			self.galleries[newGalleryID] <-! newGallery
 
-			Everbloom.nextGalleryID = Everbloom.nextGalleryID + UInt32(1)
-			emit GalleryCreated(galleryID: self.galleryID, name: self.name)
-
 			return newGalleryID
 		}
 
-		/* This method mints an Print NFT under a artwork
+		/* This method mints an Print NFT under a edition
 
 			parameters:
 			 galleryID: id of the gallery
 			 artworkID: id of the artwork
+			 editionID: id of the edition
 			 signature: url of the signature for the NFT
 
 			return @NFT: minted NFT resource
 		*/
-		pub fun mintPrint(galleryID: UInt32, artworkID: UInt32, signature: String): @NFT {
-		// TODO: check if gallery has been locked
-			let gallery:  &Gallery = self.borrowGallery(galleryID: galleryID)
+		pub fun mintPrint(galleryID: UInt32, artworkID: UInt32, editionID: UInt32, signature: String): @NFT {
+			let galleryRef:  &Gallery = self.borrowGallery(galleryID: galleryID)
 				?? panic("Cannot mint the print: unable to borrow gallery")
-			let artwork: &Artwork = gallery.borrowArtwork(artworkID: artworkID)
+			let artwork: &Artwork = galleryRef.borrowArtwork(artworkID: artworkID)
 				?? panic("Cannot mint the print: unable to borrow artwork")
 
-			if (gallery.isArtworkCompleted(artworkID: artworkID)) {
-				panic("Cannot mint the print from this artwork: This artwork has been marked as completed.")
+			if (artwork.isEditionCompleted(editionID: editionID)) {
+				panic("Cannot mint the print from this edition: This edition has been completed.")
 			}
 
-			let numOfArtworks = gallery.getArtworkNftCount(artworkID: artworkID)!
+			let numOfArtworks = artwork.numberMintedPerEdition[editionID]!
 
 			var minterCapability: Capability<&Minter> = self.minterCapability ?? panic("Minting capability not found")
 			let minterRef: &Everbloom.Minter = minterCapability.borrow() ?? panic("Cannot borrow minting resource")
@@ -559,11 +678,12 @@ pub contract Everbloom: NonFungibleToken {
 			let newPrint: @NFT <- minterRef.mintNFT(
 				galleryID: galleryID,
 				artworkID: artwork.artworkID,
+				editionID: editionID,
 				serialNumber: numOfArtworks + UInt32(1),
 				signature: signature
 			)
 
-			gallery.incrementArtworkNftCount(artworkID: artworkID)
+			artwork.incrementEditionNftCount(editionID: editionID)
 
 			return <-newPrint
 		}
@@ -572,7 +692,7 @@ pub contract Everbloom: NonFungibleToken {
 
 			return  @NonFungibleToken.Collection: collection of minted NFTs
 		*/
-		pub fun batchMintPrint(galleryID: UInt32, artworkID: UInt32, signatures: [String]): @Collection {
+		pub fun batchMintPrint(galleryID: UInt32, artworkID: UInt32, editionID: UInt32, signatures: [String]): @Collection {
 			pre {
 				signatures.length < Int(Everbloom.maxBatchMintSize):
 				"Maximum number of NFT that can be minted in a batch is ".concat(Everbloom.maxBatchMintSize.toString())
@@ -584,6 +704,7 @@ pub contract Everbloom: NonFungibleToken {
 				newCollection.deposit(token: <-self.mintPrint(
 						galleryID: galleryID,
 						artworkID: artworkID,
+						editionID: editionID,
 						signature: signature
 					)
 				)
@@ -625,12 +746,14 @@ pub contract Everbloom: NonFungibleToken {
 		pub fun mintNFT(
 			galleryID: UInt32,
 			artworkID: UInt32,
+			editionID: UInt32,
 			serialNumber: UInt32,
 			signature: String
 		) : @Everbloom.NFT {
 			let newPrint: @NFT <- create NFT(
 				galleryID: galleryID,
 				artworkID: artworkID,
+				editionID: editionID,
 				serialNumber: serialNumber,
 				signature: signature
 			)
@@ -859,9 +982,11 @@ pub contract Everbloom: NonFungibleToken {
 		// Initialize contract fields
 		self.totalSupply = 0
 		self.nextArtworkID = 1
+		self.nextEditionID = 1
 		self.nextGalleryID = 1
 		self.nextUserID = 1
 		self.maxArtLimit = 10_000
+		self.maxEditionLimit = 10
 		self.maxBatchMintSize = 10_000
 		self.maxBatchDepositSize = 10_000
 		self.maxBatchWithdrawalSize = 10_000
