@@ -13,14 +13,10 @@
 	mint an NFT. Users can request minting capability from admin.
 
 	User resource can create multiple gallery resources and store in user
-	resource object. Gallery resources can be enabled and disabled.
+	resource object. Gallery resource allows users to create multiple Artworks
 
-	Gallery resource allows users to create multiple Artwork resources; It
-	can be enabled and disabled. A disabled gallery cannot add new artwork.
-
-	Artwork resource contains the ArtworkData struct. Artwork resource object
-	and a copy of its ArtworkData struct are stored gallery resource objects.
-	Artwork can be marked as completed, which will prevent further minting of
+	NFTs are grouped by artworks. Artwork contains metadata related to prints.
+	Artwork can be marked as locked, which will prevent further minting of
 	NFTs under the artwork.
 
 	Admin resource can create a new admin and minter resource. The minter
@@ -77,10 +73,6 @@ pub contract EverbloomV2: NonFungibleToken {
 	pub event GalleryCreated(galleryID: UInt32, name: String)
 	// Emitted when an artwork is marked as completed
 	pub event ArtworkCompleted(artworkID: UInt32, numOfArtworks: UInt32)
-	// Emitted when a Gallery is disabled
-	pub event GalleryDisabled(galleryID: UInt32)
-	// Emitted when a Gallery is enabled
-	pub event GalleryEnabled(galleryID: UInt32)
 	// Emitted when a user is created
 	pub event UserCreated(userID: UInt64)
 
@@ -97,6 +89,14 @@ pub contract EverbloomV2: NonFungibleToken {
 	pub let UserStoragePath: StoragePath
 	pub let UserPublicPath: PublicPath
 
+    // Variable size dictionary of artworkDatas structs
+    access(self) var artworkDatas: {UInt32: Artwork}
+    // Variable size dictionary for externalPostID to artworkID map
+    access(self) var externalPostIDMap: {String: UInt32}
+    // artworkCompleted is a dictionary that stores artwork completion data
+    access(self) let artworkCompleted: {UInt32: Bool}
+    // numberMintedPerArtwork holds number of prints minted against artworkID
+    access(self) let numberMintedPerArtwork: {UInt32: UInt32}
 	// Maximum Limit Constants
 	// Maximum number of Arts that can be added in a Gallery
 	pub let maxArtLimit: UInt16
@@ -188,87 +188,67 @@ pub contract EverbloomV2: NonFungibleToken {
 			emit PrintNFTDestroyed(nftID: self.id)
 		}
 	}
-	// ArtworkData holds the Metadata associated with an artwork
-	// Any user can borrow the artwork to read its metadata
-	pub struct ArtworkData {
-		pub let galleryID: UInt32
-		pub let artworkID: UInt32
-		// externalPostID is the ID of a post in EverbloomV2 Platform
-		pub let externalPostID: String
-		// creator metadata
-		access(contract) let creator: ArtworkMetadata.Creator
-		// content metadata
-		access(contract) let content: ArtworkMetadata.Content
-		// traits provided by the artwork creator and EverbloomV2
-		access(contract) let attributes: [ArtworkMetadata.Attribute]
-		// Additional Metadata
-		access(contract) let additionalMetadata: {String: AnyStruct}
 
-		init(galleryID: UInt32, externalPostID: String, metadata: {String: AnyStruct}) {
-			pre {
-				metadata.length != 0: "Artwork metadata cannot be empty"
-			}
+	/* Representation of Artwork struct. Artwork groups prints
 
-			let creator = metadata.remove(key: "creator") ?? panic("Artwork creator metadata cannot be empty")
-			let content = metadata.remove(key: "content") ?? panic("Artwork content metadata cannot be empty")
-			let attributes = metadata.remove(key: "attributes") ?? []
-
-			self.galleryID = galleryID
-			self.artworkID = EverbloomV2.nextArtworkID
-			self.creator = creator as! ArtworkMetadata.Creator
-			self.content = content as! ArtworkMetadata.Content
-			self.attributes = attributes as! [ArtworkMetadata.Attribute]
-			self.additionalMetadata = metadata
-			self.externalPostID = externalPostID
-		}
-
-		pub fun getContent(): ArtworkMetadata.Content {
-			return self.content
-		}
-
-		pub fun getCreator(): ArtworkMetadata.Creator {
-			return self.creator
-		}
-
-		pub fun getAttributes(): [ArtworkMetadata.Attribute] {
-			return self.attributes
-		}
-
-		pub fun getAdditionalMetadata(): {String: AnyStruct} {
-			return self.additionalMetadata
-		}
-	}
-
-	/* Representation of Artwork struct. Artwork resource groups prints
-
-		struct resource contains metadata of the artwork
+		Artwork struct contains metadata of the artwork
 
 	   A Post on EverbloomV2 platform represent an Artwork
 	*/
 	pub struct Artwork {
 		pub let galleryID: UInt32
 		pub let artworkID: UInt32
-		pub let data: ArtworkData
+		// externalPostID is the ID of a post in EverbloomV2 Platform
+        pub let externalPostID: String
+        // creator metadata
+        access(contract) let creator: ArtworkMetadata.Creator
+        // content metadata
+        access(contract) let content: ArtworkMetadata.Content
+        // traits provided by the artwork creator and EverbloomV2
+        access(contract) let attributes: [ArtworkMetadata.Attribute]
+        // Additional Metadata
+        access(contract) let additionalMetadata: {String: AnyStruct}
 
-		init(galleryID: UInt32, externalPostID: String, metadata: {String: AnyStruct}) {
-			self.artworkID = EverbloomV2.nextArtworkID
-			self.galleryID = galleryID
-			self.data = ArtworkData(galleryID: galleryID, externalPostID: externalPostID, metadata: metadata)
-		}
+        init(galleryID: UInt32, externalPostID: String, metadata: {String: AnyStruct}) {
+        	pre {
+        		metadata.length != 0: "Artwork metadata cannot be empty"
+        	}
 
-		pub fun getArtworkData(): ArtworkData {
-			return self.data
-		}
+        	let creator = metadata.remove(key: "creator") ?? panic("Artwork creator metadata cannot be empty")
+        	let content = metadata.remove(key: "content") ?? panic("Artwork content metadata cannot be empty")
+        	let attributes = metadata.remove(key: "attributes") ?? []
+
+        	self.galleryID = galleryID
+        	self.artworkID = EverbloomV2.nextArtworkID
+        	self.creator = creator as! ArtworkMetadata.Creator
+        	self.content = content as! ArtworkMetadata.Content
+        	self.attributes = attributes as! [ArtworkMetadata.Attribute]
+        	self.additionalMetadata = metadata
+        	self.externalPostID = externalPostID
+        }
+
+        pub fun getContent(): ArtworkMetadata.Content {
+        	return self.content
+        }
+
+        pub fun getCreator(): ArtworkMetadata.Creator {
+        	return self.creator
+        }
+
+        pub fun getAttributes(): [ArtworkMetadata.Attribute] {
+        	return self.attributes
+        }
+
+        pub fun getAdditionalMetadata(): {String: AnyStruct} {
+        	return self.additionalMetadata
+        }
 	}
 
 	// GalleryPublic Interface is the public interface of Gallery
 	// Any user can borrow the public reference of gallery resource
 	pub resource interface GalleryPublic {
 		pub fun getAllArtworks(): [UInt32]
-		pub fun getArtwork(artworkID: UInt32): Artwork?
-		pub fun getArtworkByPostID(externalPostID: String): Artwork?
-		pub fun getArtworkNftCount(artworkID: UInt32): UInt32
-		pub fun isArtworkCompleted(artworkID: UInt32): Bool
+		pub fun isArtworkLocked(artworkID: UInt32): Bool
 	}
 
 	/* Representation of Gallery resource. Gallery resource contains Artworks information.
@@ -281,54 +261,22 @@ pub contract EverbloomV2: NonFungibleToken {
 	pub resource Gallery: GalleryPublic {
 		pub let galleryID: UInt32
 		// artworks stores artwork resources against artworkID
-		access(contract) let artworks: {UInt32: Artwork}
-		// artworkCompleted is a dictionary that stores artwork completion data
-		access(contract) let artworkCompleted: {UInt32: Bool}
-		// numberMintedPerArtwork holds number of prints minted against artworkID
-		access(contract) let numberMintedPerArtwork: {UInt32: UInt32}
-		pub var disabled: Bool
+		access(self) let artworks: [UInt32]
+		// artworksLocked stores the locked status for artwork
+		access(self) let artworksLocked: {UInt32: Bool}
 		// name of the gallery
 		pub var name: String
 
 		init(name: String) {
 			self.galleryID = EverbloomV2.nextGalleryID
-			self.artworks = {}
-			self.artworkCompleted = {}
-			self.numberMintedPerArtwork = {}
-			self.disabled = false
+			self.artworks = []
+			self.artworksLocked = {}
 			self.name = name
 		}
 
 		pub fun getAllArtworks(): [UInt32] {
-			return self.artworks.keys
+			return self.artworks
 		}
-
-        pub fun getArtwork(artworkID: UInt32): Artwork? {
-        	if self.artworks[artworkID] != nil {
-        		let artwork = self.artworks[artworkID] as Artwork?
-        		return artwork
-        	} else {
-        		return nil
-        	}
-        }
-
-        /* This method returns an Artwork using the id of the post in EverbloomV2 platform
-
-        	parameters: externalPostID: id of the post in EverbloomV2 platform
-
-        	return artwork or nil if no artwork is found
-        */
-        pub fun getArtworkByPostID(externalPostID: String): Artwork? {
-        	// Iterate through all the artworks and search for the externalPostID
-        	for artwork in self.artworks.values {
-        		if externalPostID == artwork.externalPostID {
-        			// If the externalPostID is found, return the artwork
-        			return  self.artworks[artworkData.artworkID] as Artwork?
-        		}
-        	}
-
-        	return nil
-        }
 
 		/* This method creates and add new artwork
 
@@ -343,96 +291,59 @@ pub contract EverbloomV2: NonFungibleToken {
 		*/
 		pub fun createArtwork(externalPostID: String, metadata: {String: AnyStruct}): UInt32 {
 			pre {
-				!self.disabled: "Cannot add create artwork to the Gallery after the gallery has been disabled."
 				self.artworks.length < Int(EverbloomV2.maxArtLimit):
 				"Cannot add create artwork. Maximum number of Artworks in gallery is ".concat(EverbloomV2.maxArtLimit.toString())
-
 			}
 			// Create the new Artwork
-			var newArtwork: Artwork = create Artwork(galleryID: self.galleryID, externalPostID: externalPostID, metadata: metadata)
-			let newID = newArtwork.artworkID
-
-			// Store it in the contract storage
-			globalllllllllllllll.artworkDatas[newID] = newArtwork.data
-			self.artworks[newID] = newArtwork
+			var newArtwork: Artwork = Artwork(galleryID: self.galleryID, externalPostID: externalPostID, metadata: metadata)
             // Increment the ID so that it isn't used again
             EverbloomV2.nextArtworkID = EverbloomV2.nextArtworkID + UInt32(1)
-
 			emit ArtworkCreated(
-				artworkID: newID,
+				artworkID: newArtwork.artworkID,
 				galleryID: self.galleryID,
 				externalPostID: externalPostID,
-				creator: newArtwork.data.creator,
-				content: newArtwork.data.content,
-				attributes: newArtwork.data.attributes
+				creator: newArtwork.creator,
+				content: newArtwork.content,
+				attributes: newArtwork.attributes
 			)
+
+			let newID = newArtwork.artworkID
+			// Store it in the contract storage
+			self.artworks.append(newID)
+			self.artworksLocked[newID] = false
+
+			// update contract level data
+			EverbloomV2.artworkDatas[newID] = newArtwork
+			EverbloomV2.externalPostIDMap[externalPostID] = newID
+			EverbloomV2.numberMintedPerArtwork[newID] = 0;
+			EverbloomV2.artworkCompleted[newID] = false;
 
 			return newID
 		}
 
-		pub fun getArtworkNftCount(artworkID: UInt32): UInt32 {
-			pre {
-				self.numberMintedPerArtwork[artworkID] != nil: "Artwork does not exist"
-			}
-
-			return self.numberMintedPerArtwork[artworkID]!
-		}
-
-		access(contract) fun incrementArtworkNftCount(artworkID: UInt32): UInt32 {
-		    pre {
-                self.numberMintedPerArtwork[artworkID] != nil: "Artwork does not exist"
-            }
-        	self.numberMintedPerArtwork[artworkID] = self.numberMintedPerArtwork[artworkID]! + UInt32(1)
-
-            return self.numberMintedPerArtwork[artworkID]!
-        }
-
-		/* This method mark artwork as completed
+		/* This method mark artwork as locked to prevent further minting of prints
 
 			parameter:  artworkID
 		*/
-		access(contract) fun setArtworkComplete(artworkID: UInt32) {
+		access(contract) fun setArtworkLocked(artworkID: UInt32) {
 			pre {
-				self.artworkCompleted[artworkID] != nil: "Cannot set Artwork to Complete: Artwork doesn't exist"
-			}
+            	self.artworksLocked[artworkID] != nil: "Artwork doesn't exist"
+            }
 
-			if !self.artworkCompleted[artworkID]! {
-				self.artworkCompleted[artworkID] = true
+            if !self.artworksLocked[artworkID]! {
+               	self.artworksLocked[artworkID] = true
 
-				emit ArtworkCompleted(artworkID: self.artworkID, numOfArtworks: self.numberMintedPerArtwork[artworkID]!)
-			}
-
-			// TODO: update contract artwork data
+               	EverbloomV2.artworkCompleted[artworkID] = true
+                emit ArtworkCompleted(artworkID: artworkID, numOfArtworks: EverbloomV2.numberMintedPerArtwork[artworkID]!)
+            }
 		}
 
-		pub fun isArtworkCompleted(artworkID: UInt32): Bool {
-			pre {
-				self.artworkCompleted[artworkID] != nil: "Artwork doesn't exist."
-			}
+		pub fun isArtworkLocked(artworkID: UInt32): Bool {
+		    pre {
+        		self.artworksLocked[artworkID] != nil: "Artwork doesn't exist"
+        	}
 
-			return self.artworkCompleted[artworkID]!
-		}
-
-		// This method disables the gallery
-		// TODO: move this to contract level
-		pub fun disableGallery () {
-			if !self.disabled {
-				self.disabled = true
-				emit GalleryDisabled(galleryID: self.galleryID)
-			}
-		}
-
-		// This method enables the gallery
-		// TODO: move this to contract level
-		pub fun enableGallery () {
-			if self.disabled {
-				self.disabled = false
-				emit GalleryEnabled(galleryID: self.galleryID)
-			}
-		}
-
-		destroy() {
-			destroy self.artworks
+            return self.artworksLocked[artworkID]!
 		}
 	}
 
@@ -504,6 +415,10 @@ pub contract EverbloomV2: NonFungibleToken {
 			return galleryID
 		*/
 		pub fun createGallery(name: String): UInt32 {
+		    pre {
+                self.minterCapability != nil: "Unable to create gallery: Minting capability not found"
+            }
+
 			// Create the new Gallery
 			var newGallery <- create EverbloomV2.Gallery(name: name)
 			let newGalleryID = newGallery.galleryID
@@ -511,7 +426,7 @@ pub contract EverbloomV2: NonFungibleToken {
 			self.galleries[newGalleryID] <-! newGallery
 
 			EverbloomV2.nextGalleryID = EverbloomV2.nextGalleryID + UInt32(1)
-			emit GalleryCreated(galleryID: self.galleryID, name: self.name)
+			emit GalleryCreated(galleryID: newGalleryID, name: name)
 
 			return newGalleryID
 		}
@@ -526,29 +441,26 @@ pub contract EverbloomV2: NonFungibleToken {
 			return @NFT: minted NFT resource
 		*/
 		pub fun mintPrint(galleryID: UInt32, artworkID: UInt32, signature: String): @NFT {
-		// TODO: check if gallery has been locked
 			let gallery:  &Gallery = self.borrowGallery(galleryID: galleryID)
 				?? panic("Cannot mint the print: unable to borrow gallery")
-			let artwork: &Artwork = gallery.borrowArtwork(artworkID: artworkID)
-				?? panic("Cannot mint the print: unable to borrow artwork")
 
-			if (gallery.isArtworkCompleted(artworkID: artworkID)) {
+			if (gallery.isArtworkLocked(artworkID: artworkID)) {
 				panic("Cannot mint the print from this artwork: This artwork has been marked as completed.")
 			}
 
-			let numOfArtworks = gallery.getArtworkNftCount(artworkID: artworkID)!
+			let numOfArtworks = EverbloomV2.getArtworkNftCount(artworkID: artworkID)!
 
 			var minterCapability: Capability<&Minter> = self.minterCapability ?? panic("Minting capability not found")
 			let minterRef: &EverbloomV2.Minter = minterCapability.borrow() ?? panic("Cannot borrow minting resource")
 
 			let newPrint: @NFT <- minterRef.mintNFT(
 				galleryID: galleryID,
-				artworkID: artwork.artworkID,
+				artworkID: artworkID,
 				serialNumber: numOfArtworks + UInt32(1),
 				signature: signature
 			)
 
-			gallery.incrementArtworkNftCount(artworkID: artworkID)
+			EverbloomV2.numberMintedPerArtwork[artworkID] = EverbloomV2.numberMintedPerArtwork[artworkID]! + UInt32(1)
 
 			return <-newPrint
 		}
@@ -575,26 +487,6 @@ pub contract EverbloomV2: NonFungibleToken {
 			}
 
 			return <-newCollection
-		}
-
-		// This method disables the gallery
-		pub fun disableGallery(galleryID: UInt32) {
-			pre {
-				self.galleries[galleryID] != nil: "Cannot borrow Gallery: The Gallery doesn't exist"
-			}
-
-			let gallery = &self.galleries[galleryID] as &EverbloomV2.Gallery?
-			gallery!.disableGallery()
-		}
-
-		 // This method enables the gallery
-		pub fun unlockGallery(galleryID: UInt32) {
-			pre {
-				self.galleries[galleryID] != nil: "Cannot borrow Gallery: The Gallery doesn't exist"
-			}
-
-			let gallery = &self.galleries[galleryID] as &EverbloomV2.Gallery?
-			gallery!.enableGallery()
 		}
 
 		destroy() {
@@ -836,6 +728,47 @@ pub contract EverbloomV2: NonFungibleToken {
 		return <-create EverbloomV2.Collection()
 	}
 
+	pub fun getArtwork(artworkID: UInt32): Artwork? {
+    	if EverbloomV2.artworkDatas[artworkID] != nil {
+    		let artwork = EverbloomV2.artworkDatas[artworkID] as Artwork?
+    		return artwork
+    	} else {
+    		return nil
+    	}
+    }
+
+    /* This method returns an Artwork using the id of the post in EverbloomV2 platform
+
+    	parameters: externalPostID: id of the post in EverbloomV2 platform
+
+    	return artwork or nil if no artwork is found
+    */
+    pub fun getArtworkByPostID(externalPostID: String): Artwork? {
+        let artworkID: UInt32? = EverbloomV2.externalPostIDMap[externalPostID]
+
+    	if artworkID != nil {
+    	    return EverbloomV2.getArtwork(artworkID: artworkID!) as Artwork?
+    	} else {
+    	    return nil
+    	}
+    }
+
+    pub fun getArtworkNftCount(artworkID: UInt32): UInt32 {
+    	pre {
+    		EverbloomV2.numberMintedPerArtwork[artworkID] != nil: "Artwork does not exist"
+    	}
+
+    	return EverbloomV2.numberMintedPerArtwork[artworkID]!
+    }
+
+	pub fun isArtworkCompleted(artworkID: UInt32): Bool {
+		pre {
+			EverbloomV2.artworkCompleted[artworkID] != nil: "Artwork doesn't exist."
+		}
+
+		return EverbloomV2.artworkCompleted[artworkID]!
+	}
+
 	// -----------------------------------------------------------------------
 	// EverbloomV2 initialization function
 	// -----------------------------------------------------------------------
@@ -850,6 +783,10 @@ pub contract EverbloomV2: NonFungibleToken {
 		self.maxBatchMintSize = 10_000
 		self.maxBatchDepositSize = 10_000
 		self.maxBatchWithdrawalSize = 10_000
+		self.artworkDatas = {}
+		self.externalPostIDMap = {}
+		self.artworkCompleted = {}
+		self.numberMintedPerArtwork = {}
 
 		// set contract paths
 		self.CollectionStoragePath = /storage/EverbloomV2Collection
