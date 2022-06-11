@@ -62,8 +62,11 @@
     "emulator": {
       "emulator-account": [
         "NonFungibleToken",
+        "MetadataViews",
+        "Everbloom",
+        "EverbloomV2",
         "ArtworkMetadata",
-        "Everbloom"
+        "EverbloomMetadata"
       ]
     }
   }
