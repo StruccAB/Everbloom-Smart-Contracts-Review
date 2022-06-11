@@ -57,7 +57,8 @@ pub contract EverbloomV2: NonFungibleToken {
 		artworkID: UInt32,
 		galleryID: UInt32,
 		serialNumber: UInt32,
-		signature: String?
+		signature: String?,
+		metadata: {String: String}
 	)
 	// Emitted when an NFT (print) is detroyed
 	pub event PrintNFTDestroyed(nftID: UInt64)
@@ -66,6 +67,7 @@ pub contract EverbloomV2: NonFungibleToken {
 		artworkID: UInt32,
 		galleryID: UInt32,
 		externalPostID: String,
+		metadata: {String: String}
 	)
 	// Emitted when a Gallery is created
 	pub event GalleryCreated(galleryID: UInt32, name: String)
@@ -189,7 +191,8 @@ pub contract EverbloomV2: NonFungibleToken {
 				artworkID: self.data.artworkID,
 				galleryID: self.data.galleryID,
 				serialNumber: self.data.serialNumber,
-				signature: signature
+				signature: signature,
+				metadata: metadata
 			)
 		}
 
@@ -389,7 +392,7 @@ pub contract EverbloomV2: NonFungibleToken {
 			  metadata: metadata of the artwork
 
 			Pre-Conditions:
-			gallery should be enabled
+			Gallery arworks should not increase froma  threshold value
 
 			return artworkID: id of the artwork
 		*/
@@ -411,6 +414,7 @@ pub contract EverbloomV2: NonFungibleToken {
 				artworkID: newArtwork.artworkID,
 				galleryID: self.galleryID,
 				externalPostID: externalPostID,
+				metadata: metadata
 			)
 
 			let newID = newArtwork.artworkID
@@ -549,7 +553,7 @@ pub contract EverbloomV2: NonFungibleToken {
 		pub fun mintPrint(
 		    galleryID: UInt32,
 		    artworkID: UInt32,
-		    signature: String,
+		    signature: String?,
 		    metadata: {String: String},
 		    royalties: [MetadataViews.Royalty]
 		): @NFT {
@@ -586,7 +590,7 @@ pub contract EverbloomV2: NonFungibleToken {
 		pub fun batchMintPrint(
 		    galleryID: UInt32,
 		    artworkID: UInt32,
-		    signatures: [String],
+		    signatures: [String?],
 		    metadata: {String: String},
 		    royalties: [MetadataViews.Royalty]
 	    ): @Collection {
@@ -625,7 +629,7 @@ pub contract EverbloomV2: NonFungibleToken {
 			galleryID: UInt32,
 			artworkID: UInt32,
 			serialNumber: UInt32,
-			signature: String,
+			signature: String?,
 			metadata: {String: String},
             royalties: [MetadataViews.Royalty]
 		) : @EverbloomV2.NFT {
