@@ -828,7 +828,7 @@ pub contract EverbloomV2: NonFungibleToken {
 		*/
 		pub fun borrowPrint(id: UInt64): &EverbloomV2.NFT? {
 			if self.ownedNFTs[id] != nil {
-				let ref = &self.ownedNFTs[id] as auth &NonFungibleToken.NFT?
+				let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
 				return ref as! &EverbloomV2.NFT
 			} else {
 				return nil
