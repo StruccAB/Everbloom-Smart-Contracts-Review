@@ -6,6 +6,14 @@
     }
   },
   "contracts": {
+    "FungibleToken": {
+      "source": "./contracts/FungibleToken.cdc",
+      "aliases": {
+        "emulator": "0xee82856bf20e2aa6",
+        "testnet": "0x9a0766d93b6608b7",
+        "mainnet": "0xf233dcee88fe0abe"
+      }
+    },
     "NonFungibleToken": {
       "source": "./contracts/NonFungibleToken.cdc",
       "aliases": {
@@ -13,8 +21,31 @@
         "mainnet": "0x1d7e57aa55817448"
       }
     },
+    "NFTStorefront": {
+      "source": "./contracts/NFTStorefront.cdc",
+      "aliases": {
+        "testnet": "0x94b06cfca1d8a476",
+        "mainnet": "0x4eb8a10cb9f87357"
+      }
+    },
+    "FUSD": {
+      "source": "./contracts/FUSD.cdc",
+      "aliases": {
+        "testnet": "0xe223d8a629e49c68",
+        "mainnet": "0x3c5959b568896393"
+      }
+    },
+    "MetadataViews": {
+      "source": "./contracts/MetadataViews.cdc",
+      "aliases": {
+        "testnet": "0x631e88ae7f1d7c20",
+        "mainnet": "0x1d7e57aa55817448"
+      }
+    },
+    "Everbloom": "./contracts/Everbloom.cdc",
+    "EverbloomV2": "./contracts/EverbloomV2.cdc",
     "ArtworkMetadata": "./contracts/ArtworkMetadata.cdc",
-    "Everbloom": "./contracts/Everbloom.cdc"
+    "EverbloomMetadata": "./contracts/EverbloomMetadata.cdc"
   },
   "networks": {
     "emulator": "127.0.0.1:3569",
