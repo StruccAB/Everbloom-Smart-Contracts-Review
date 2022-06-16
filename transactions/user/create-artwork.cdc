@@ -26,7 +26,7 @@ transaction (
   }
 
   execute {
-    var metadata: {String: AnyStruct} = additionalMetadata
+    var metadata: {String: AnyStruct} = {}
     let creatorStructData = ArtworkMetadata.Creator(
       name: creator["name"] ?? panic("creator name is required"),
       bio: creator["bio"] ?? panic("creator bio is required"),
@@ -48,6 +48,11 @@ transaction (
         traitType: traitType,
         value: attributes[traitType]  ?? panic("value is missing in attributes")
       ))
+    }
+
+    for key in additionalMetadata.keys {
+      let value = additionalMetadata[key]  ?? panic("Invalid additional attribute value.")
+      metadata.insert(key: key, value)
     }
 
     metadata.insert(key: "creator", creatorStructData)
