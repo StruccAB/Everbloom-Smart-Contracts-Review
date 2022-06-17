@@ -5,6 +5,7 @@ import EverbloomV2 from "../../../contracts/EverbloomV2.cdc"
 transaction (
     galleryID: UInt32,
     artworkID: UInt32,
+    externalPrintID: String,
     signature: String,
     metadata: {String: String}
 ) {
@@ -22,6 +23,7 @@ transaction (
     let newPrint <- self.userRef.mintPrint(
       galleryID: galleryID,
       artworkID: artworkID,
+      externalPrintID: externalPrintID,
       signature: signature,
       metadata: metadata,
       royalties: []
