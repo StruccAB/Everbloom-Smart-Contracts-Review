@@ -112,13 +112,26 @@ export const createArtwork = async (account, args) => {
 };
 
 /*
- * mint Print NFT under an edition in an Artwork resource
+ * mint Print NFT in an Artwork resource
  * @param {string} account - account address
  * @param {any[]} args - argument for the mint print transaction
  * @returns {Promise<*>}
  * */
 export const mintPrint = async (account, args) => {
   const name = "everbloom-v2/user/mint-print";
+  const signers = [account];
+
+  return sendTransaction({ name, signers, args });
+};
+
+/*
+ * invalidate a perk
+ * @param {string} account - account address
+ * @param {any[]} args - argument for the mint print transaction
+ * @returns {Promise<*>}
+ * */
+export const disablePerk = async (account, args) => {
+  const name = "everbloom-v2/admin/disable-perk";
   const signers = [account];
 
   return sendTransaction({ name, signers, args });
@@ -291,6 +304,20 @@ export const getNftMetadata = async (account, printId) => {
  * */
 export const getPrintMetadata = async (account, printId) => {
   const name = "everbloom-v2/get-print-metadata";
+  const args = [account, printId];
+
+  return executeScript({ name, args });
+};
+
+/*
+ * Returns the EverbloomMetadata.EverbloomMetadataView object iof the NFT metadata
+ * @param {string} account - account address
+ * @param {number} printId - id of the print
+ * @throws Will throw an error if execution will be halted
+ * @returns {UInt64}
+ * */
+export const getNftPerksMetadata = async (account, printId) => {
+  const name = "everbloom-v2/get-nft-perks";
   const args = [account, printId];
 
   return executeScript({ name, args });
