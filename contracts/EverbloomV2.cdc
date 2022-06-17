@@ -95,6 +95,8 @@ pub contract EverbloomV2: NonFungibleToken {
     access(self) var externalPostIDMap: {String: UInt32}
     // artworkCompleted is a dictionary that stores artwork completion data
     access(self) let artworkCompleted: {UInt32: Bool}
+    // Variable size dictionary for externalPrintIDMap to nft map
+    access(self) var externalPrintIDMap: {String: UInt64}
     // numberMintedPerArtwork holds number of prints minted against artworkID
     access(self) let numberMintedPerArtwork: {UInt32: UInt32}
     // validPerks stores information of perk validity
@@ -140,6 +142,7 @@ pub contract EverbloomV2: NonFungibleToken {
 		pub let artworkID: UInt32
 		pub let galleryID: UInt32
 		pub let serialNumber: UInt32
+		pub let externalPrintID: String
 		pub let signature: String?
 		pub let metadata: {String: String}
 
@@ -147,12 +150,14 @@ pub contract EverbloomV2: NonFungibleToken {
 			galleryID: UInt32,
 			artworkID: UInt32,
 			serialNumber: UInt32,
+			externalPrintID: String,
 			signature: String?,
 			metadata: {String: String}
 		) {
 			self.galleryID = galleryID
 			self.artworkID = artworkID
 			self.serialNumber = serialNumber
+			self.externalPrintID = externalPrintID
 			self.signature = signature
 			self.metadata = metadata
 		}
@@ -170,6 +175,7 @@ pub contract EverbloomV2: NonFungibleToken {
 			galleryID: UInt32,
 			artworkID: UInt32,
 			serialNumber: UInt32,
+			externalPrintID: String,
 			signature: String?,
 			metadata: {String: String},
 			royalties: [MetadataViews.Royalty]
@@ -181,10 +187,12 @@ pub contract EverbloomV2: NonFungibleToken {
 				galleryID: galleryID,
 				artworkID: artworkID,
 				serialNumber: serialNumber,
+				externalPrintID: externalPrintID,
 				signature: signature,
 				metadata: metadata,
 			)
 			self.royalties = royalties
+			EverbloomV2.externalPrintIDMap[externalPrintID] = self.id
 
 			emit PrintNFTMinted(
 				nftID: self.id,
@@ -244,9 +252,9 @@ pub contract EverbloomV2: NonFungibleToken {
     }
 
     pub fun getPrintView(data: PrintData): EverbloomMetadata.EverbloomMetadataView? {
-        let artwork = EverbloomV2.getArtwork(artworkID: data.artworkID)
+        let artwork = (EverbloomV2.getArtwork(artworkID: data.artworkID))!
         if (artwork != nil) {
-            let metadata = artwork!.getMetadata()
+            let metadata = artwork.getMetadata()
             return EverbloomMetadata.EverbloomMetadataView(
                 name: metadata["name"],
                 description: metadata["description"],
@@ -259,6 +267,8 @@ pub contract EverbloomV2: NonFungibleToken {
                 creatorUrl: metadata["creatorUrl"],
                 creatorDescription: metadata["creatorDescription"],
                 creatorAddress: metadata["creatorAddress"],
+                externalPostId: artwork.externalPostID,
+                externalPrintId: data.externalPrintID,
                 rarity: metadata["rarity"],
                 serialNumber: data.serialNumber,
                 totalPrintMinted: EverbloomV2.getArtworkNftCount(artworkID: data.artworkID)
@@ -553,6 +563,7 @@ pub contract EverbloomV2: NonFungibleToken {
 		pub fun mintPrint(
 		    galleryID: UInt32,
 		    artworkID: UInt32,
+		    externalPrintID: String,
 		    signature: String?,
 		    metadata: {String: String},
 		    royalties: [MetadataViews.Royalty]
@@ -573,6 +584,7 @@ pub contract EverbloomV2: NonFungibleToken {
 				galleryID: galleryID,
 				artworkID: artworkID,
 				serialNumber: numOfArtworks + UInt32(1),
+				externalPrintID: externalPrintID,
 				signature: signature,
 				metadata: metadata,
                 royalties: royalties
@@ -590,22 +602,24 @@ pub contract EverbloomV2: NonFungibleToken {
 		pub fun batchMintPrint(
 		    galleryID: UInt32,
 		    artworkID: UInt32,
+		    externalPrintIDs: [String],
 		    signatures: [String?],
 		    metadata: {String: String},
 		    royalties: [MetadataViews.Royalty]
 	    ): @Collection {
 			pre {
-				signatures.length < Int(EverbloomV2.maxBatchMintSize):
+				externalPrintIDs.length < Int(EverbloomV2.maxBatchMintSize):
 				"Maximum number of NFT that can be minted in a batch is ".concat(EverbloomV2.maxBatchMintSize.toString())
 			}
 
 			let newCollection <- create Collection()
 
-			for signature in signatures {
+			for index, externalPrintID in externalPrintIDs {
 				newCollection.deposit(token: <-self.mintPrint(
 						galleryID: galleryID,
 						artworkID: artworkID,
-						signature: signature,
+						externalPrintID: externalPrintID,
+						signature: signatures[index],
 						metadata: metadata,
 						royalties: royalties
 					)
@@ -629,6 +643,7 @@ pub contract EverbloomV2: NonFungibleToken {
 			galleryID: UInt32,
 			artworkID: UInt32,
 			serialNumber: UInt32,
+			externalPrintID: String,
 			signature: String?,
 			metadata: {String: String},
             royalties: [MetadataViews.Royalty]
@@ -637,6 +652,7 @@ pub contract EverbloomV2: NonFungibleToken {
 				galleryID: galleryID,
 				artworkID: artworkID,
 				serialNumber: serialNumber,
+				externalPrintID: externalPrintID,
 				signature: signature,
 				metadata: metadata,
                 royalties: royalties
@@ -869,6 +885,14 @@ pub contract EverbloomV2: NonFungibleToken {
 		return <-create EverbloomV2.Collection()
 	}
 
+	pub fun getArtworkIdByExternalPostId(externalPostID: String): UInt32? {
+        return EverbloomV2.externalPostIDMap[externalPostID];
+    }
+
+    pub fun getNftIDByExternalPrintID(externalPrintID: String): UInt64? {
+        return EverbloomV2.externalPrintIDMap[externalPrintID];
+    }
+
 	pub fun getArtwork(artworkID: UInt32): Artwork? {
     	if EverbloomV2.artworkDatas[artworkID] != nil {
     		let artwork = EverbloomV2.artworkDatas[artworkID] as Artwork?
@@ -929,6 +953,7 @@ pub contract EverbloomV2: NonFungibleToken {
 		self.artworkDatas = {}
 		self.externalPostIDMap = {}
 		self.artworkCompleted = {}
+		self.externalPrintIDMap = {}
 		self.numberMintedPerArtwork = {}
 		self.validPerks = {}
 

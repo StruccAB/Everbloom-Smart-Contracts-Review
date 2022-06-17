@@ -60,6 +60,8 @@ pub contract EverbloomMetadata {
     	pub let creatorUrl: String?
     	pub let creatorDescription: String?
     	pub let creatorAddress: String?
+    	pub let externalPostId: String
+    	pub let externalPrintId: String
     	pub let rarity: String?
     	pub let serialNumber: UInt32
     	pub let totalPrintMinted: UInt32?
@@ -76,6 +78,8 @@ pub contract EverbloomMetadata {
             creatorUrl: String?,
             creatorDescription: String?,
             creatorAddress: String?,
+            externalPostId: String,
+            externalPrintId: String,
             rarity: String?,
             serialNumber: UInt32,
             totalPrintMinted: UInt32?
@@ -91,6 +95,8 @@ pub contract EverbloomMetadata {
     		self.creatorUrl = creatorUrl
     		self.creatorDescription = creatorDescription
     		self.creatorAddress = creatorAddress
+    		self.externalPostId = externalPostId
+    		self.externalPrintId = externalPrintId
     		self.rarity = rarity
     		self.serialNumber = serialNumber
     		self.totalPrintMinted = totalPrintMinted
