@@ -6,8 +6,7 @@ transaction (
     galleryID: UInt32,
     artworkID: UInt32,
     signature: String,
-    metadata: {String: String},
-    royalties: [MetadataViews.Royalty]
+    metadata: {String: String}
 ) {
   let collectionRef: &EverbloomV2.Collection
   let userRef: &EverbloomV2.User
@@ -25,7 +24,7 @@ transaction (
       artworkID: artworkID,
       signature: signature,
       metadata: metadata,
-      royalties: royalties
+      royalties: []
     )
     self.collectionRef.deposit(token: <- newPrint)
   }
