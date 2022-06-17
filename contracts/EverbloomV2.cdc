@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 /*
 	Description: Central Smart Contract for EverbloomV2
-	Authors: Shehryar Shoukat shehryar@EverbloomV2.app
+	Authors: Shehryar Shoukat shehryar@everbloom.app
 
 	This contract contains the core functionality of EverbloomV2 DApp
 
