@@ -25,37 +25,37 @@ import {
   mintPrint,
   createMinter,
   addUserMintingCapability, transferPrint, getLastPrintId
-} from "../src/everbloom";
+} from "../../src/everbloom-v1";
 import {
   getEverbloomAdminAddress,
   getUserAliceAddress,
   getUserBobAddress,
-} from "../src/common";
+} from "../../src/common";
 import {
   getCreateArtworkArgument,
   getCreateEditionArguments,
   getCreateGalleryArguments,
   getMintPrintArguments
-} from "../src/mock-data";
+} from "../../src/mock-data";
 
 // Increase timeout if your tests failing due to timeout
 jest.setTimeout(10000);
 
-describe("everbloom", ()=>{
+describe("everbloom V1", ()=>{
   beforeAll(async () => {
-    const basePath = path.resolve(__dirname, "../../../Everbloom-Smart-Contracts-Review");
+    const basePath = path.resolve(__dirname, "../../../../Everbloom-Smart-Contracts-Review");
 		// You can specify different port to parallelize execution of describe blocks
     const port = 8080;
 		// Setting logging flag to true will pipe emulator output to console
     const logging = false;
 
     await init(basePath, { port, logging });
-    return emulator.start(port);
+    // return emulator.start(port);
   });
 
  // Stop emulator, so it could be restarted
   afterAll(async () => {
-    return emulator.stop();
+    // return emulator.stop();
   });
 
   it("shall deploy Everbloom contract", async () => {
