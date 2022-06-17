@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Automated tests of Everbloom.",
   "scripts": {
-    "test": "jest",
+    "test": "jest --runInBand",
     "test:cov": "jest --coverage"
   },
   "author": "Shehryar@Everbloom",
