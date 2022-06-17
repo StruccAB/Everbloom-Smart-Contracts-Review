@@ -114,6 +114,7 @@ export const getMintPrintArguments = (galleryId, artworkId, editionId, id = 1) =
  * @return {boolean} flase to include signature
  */
 export const getMintPrintEverbloomv2Arguments = (galleryId, artworkId, id = 1, addSignature = true) => {
+  const externalPrintId = `EXTERNAL_PRINT_${id}`
   let signature;
 
   if (addSignature) {
@@ -121,5 +122,5 @@ export const getMintPrintEverbloomv2Arguments = (galleryId, artworkId, id = 1, a
   }
   const metadata = {};
 
-  return [galleryId, artworkId, signature, metadata];
+  return [galleryId, artworkId, externalPrintId, signature, metadata];
 }

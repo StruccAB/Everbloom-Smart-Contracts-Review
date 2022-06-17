@@ -44,18 +44,19 @@ jest.setTimeout(10000);
 describe("everbloom V1", ()=>{
   beforeAll(async () => {
     const basePath = path.resolve(__dirname, "../../../../Everbloom-Smart-Contracts-Review");
-		// You can specify different port to parallelize execution of describe blocks
+    // You can specify different port to parallelize execution of describe blocks
     const port = 8080;
-		// Setting logging flag to true will pipe emulator output to console
+    // Setting logging flag to true will pipe emulator output to console
     const logging = false;
 
     await init(basePath, { port, logging });
-    // return emulator.start(port);
+
+    return emulator.start(port);
   });
 
  // Stop emulator, so it could be restarted
   afterAll(async () => {
-    // return emulator.stop();
+    return emulator.stop();
   });
 
   it("shall deploy Everbloom contract", async () => {

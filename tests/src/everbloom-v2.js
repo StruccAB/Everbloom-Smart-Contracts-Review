@@ -202,11 +202,11 @@ export const getArtwork = async (artworkId) => {
 
 /*
  * Returns the id of the arwork in the contract using external post id
- * @param {string} account - account address
+ * @param {string} externalPostId - if of the everbloom platform post
  * @throws Will throw an error if execution will be halted
  * @returns {UInt64}
  * */
-export const getArtworkId = async (externalPostId) => {
+export const getArtworkIdByExternalPostId = async (externalPostId) => {
   const name = "everbloom-v2/get-artwork-id-by-post-id";
   const args = [externalPostId];
 
@@ -277,6 +277,19 @@ export const getLastArtworkId = async (account, galleryId) => {
 export const getLastPrintId = async (account) => {
   const name = "everbloom-v2/get-last-print-of-gallery";
   const args = [account];
+
+  return executeScript({ name, args });
+};
+
+/*
+ * Returns the print id of Everbloom contract using Print id of the Everbloom Platform.
+ * @param {string} externalPrintId - print id of the everbloom platform
+ * @throws Will throw an error if execution will be halted
+ * @returns {UInt64}
+ * */
+export const  getNftIdByExternalPrintId = async (externalPrintId) => {
+  const name = "everbloom-v2/get-nft-id-by-external-print-id";
+  const args = [externalPrintId];
 
   return executeScript({ name, args });
 };

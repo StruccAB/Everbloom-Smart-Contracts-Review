@@ -20,7 +20,8 @@ import {
   getGalleryArtworkCount,
   getLastArtworkId,
   getArtwork,
-  getArtworkId,
+  getArtworkIdByExternalPostId,
+  getNftIdByExternalPrintId,
   mintPrint,
   getNftMetadata,
   getPrintMetadata,
@@ -48,18 +49,18 @@ jest.setTimeout(10000);
 describe("everbloom V2", ()=>{
   beforeAll(async () => {
     const basePath = path.resolve(__dirname, "../../../../Everbloom-Smart-Contracts-Review");
-		// You can specify different port to parallelize execution of describe blocks
+    // You can specify different port to parallelize execution of describe blocks
     const port = 8080;
-		// Setting logging flag to true will pipe emulator output to console
+    // Setting logging flag to true will pipe emulator output to console
     const logging = false;
 
     await init(basePath, { port, logging });
-    // return emulator.start(port);
+    return emulator.start(port);
   });
 
  // Stop emulator, so it could be restarted
   afterAll(async () => {
-    // return emulator.stop();
+    return emulator.stop();
   });
 
   it("shall deploy Everbloom contract", async () => {
@@ -148,7 +149,7 @@ describe("everbloom V2", ()=>{
       const argMetadata = args[2];
       const externalPostId = args[1];
       const artworkCount = await getGalleryArtworkCount(UserBob, galleryId)
-      const artworkIdUsingExternalPostId = await getArtworkId(externalPostId);
+      const artworkIdUsingExternalPostId = await getArtworkIdByExternalPostId(externalPostId);
       const artworkId = await getLastArtworkId(UserBob, galleryId);
       const artwork = await getArtwork(artworkId);
 
@@ -157,11 +158,13 @@ describe("everbloom V2", ()=>{
       expect({
         name: artwork.metadata.name,
         description: artwork.metadata.description,
-        creatorAddress: artwork.metadata.creatorAddress
+        creatorAddress: artwork.metadata.creatorAddress,
+        externalPostId: artwork.externalPostID,
       }).toMatchObject({
         name: argMetadata.name,
         description: argMetadata.description,
         creatorAddress: UserBob,
+        externalPostId: externalPostId,
       });
     });
   });
@@ -177,7 +180,7 @@ describe("everbloom V2", ()=>{
     await shallResolve(async () => {
       const artwork = await getArtwork(artworkId);
       const itemCount = await getPrintCount(UserBob);
-      const printId = await getLastPrintId(UserBob);
+      const printId = await getNftIdByExternalPrintId(args[2]);
       const nftMetadata = await getNftMetadata(UserBob, printId);
       const printMetadata = await getPrintMetadata(UserBob, printId);
 
@@ -185,27 +188,15 @@ describe("everbloom V2", ()=>{
       expect(printMetadata.serialNumber).toBe(1);
       expect(printMetadata.totalPrintMinted).toBe(1);
       expect({
-        name: artwork.metadata.name,
-        description: artwork.metadata.description,
-        thumbnail: artwork.metadata.thumbnail
-      }).toMatchObject({
         name: nftMetadata.name,
         description: nftMetadata.description,
         thumbnail: nftMetadata.thumbnail.url,
-      });
-      expect({
+      }).toMatchObject({
         name: artwork.metadata.name,
         description: artwork.metadata.description,
-        thumbnail: artwork.metadata.thumbnail,
-        image: artwork.metadata.image,
-        video: artwork.metadata.video,
-        previewUrl: artwork.metadata.previewUrl,
-        creatorUrl: artwork.metadata.creatorUrl,
-        creatorName: artwork.metadata.creatorName,
-        creatorDescription: artwork.metadata.creatorDescription,
-        creatorAddress: artwork.metadata.creatorAddress,
-        signature: args[2]
-      }).toMatchObject({
+        thumbnail: artwork.metadata.thumbnail
+      });
+      expect({
         name: printMetadata.name,
         description: printMetadata.description,
         thumbnail: printMetadata.thumbnail.url,
@@ -217,6 +208,22 @@ describe("everbloom V2", ()=>{
         creatorDescription: printMetadata.creatorDescription,
         creatorAddress: printMetadata.creatorAddress,
         signature: printMetadata.signature.url,
+        externalPostId: printMetadata.externalPostId,
+        externalPrintId: printMetadata.externalPrintId,
+      }).toMatchObject({
+        name: artwork.metadata.name,
+        description: artwork.metadata.description,
+        thumbnail: artwork.metadata.thumbnail,
+        image: artwork.metadata.image,
+        video: artwork.metadata.video,
+        previewUrl: artwork.metadata.previewUrl,
+        creatorUrl: artwork.metadata.creatorUrl,
+        creatorName: artwork.metadata.creatorName,
+        creatorDescription: artwork.metadata.creatorDescription,
+        creatorAddress: artwork.metadata.creatorAddress,
+        signature: args[3],
+        externalPostId: artwork.externalPostID,
+        externalPrintId: args[2],
       });
     });
   });
@@ -268,4 +275,4 @@ describe("everbloom V2", ()=>{
       expect(alicePrintCount).toBe(1);
     });
   });
-}) // TODO(shehryar): perk tests and external dis test
+})
