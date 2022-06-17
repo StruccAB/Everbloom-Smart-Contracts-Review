@@ -39,6 +39,47 @@ export const getCreateArtworkArgument = (galleryId, creatorName, id = 1) => {
 }
 
 /**
+ * return arguments for create artwork transaction for Everbloom V2
+ * @param {number} galleryId
+ * @param {string} creatorName
+ * @param {number} id
+ * @return {boolean} flag to include perks
+ */
+export const getCreateArtworkEverbloomv2Argument = (galleryId, creatorName, id = 1, addPerks = false) => {
+  const externalPostId = `EXTERNAL_POST_${id}`
+  const metadata = {
+    creatorName,
+    name: `test-artwork${id}`,
+    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+    image: "https://d2st0fnq3grac2.cloudfront.net/flow-fest/tickets/holo.png",
+    thumbnail: "https://d2st0fnq3grac2.cloudfront.net/flow-fest/tickets/holo-thumbnail.png",
+    video: "https://d2st0fnq3grac2.cloudfront.net/flow-fest/tickets/holo-thumbnail.png",
+    previewUrl: "https://everbloom.app/ticket/holo",
+    creatorUrl: "https://everbloom.app",
+    creatorDescription: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+  }
+  let perks = []
+
+  if (addPerks) {
+    perks = [
+      {
+        type: 'PERK_TYPE_1',
+        title: 'PERK_1',
+        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
+        url: 'https://everbloom.app/holo/perks'
+      },
+      {
+        type: 'PERK_TYPE_2',
+        title: 'PERK_2',
+        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit',
+      }
+    ]
+  }
+
+  return [galleryId, externalPostId, metadata, perks]
+}
+
+/**
  * return arguments for create edition transaction
  * @param {number} galleryId
  * @param {number} artworkId
@@ -63,4 +104,22 @@ export const getMintPrintArguments = (galleryId, artworkId, editionId, id = 1) =
   const signature = `SIGNATURE_${id}`
 
   return [galleryId, artworkId, editionId, signature];
+}
+
+/**
+ * return arguments for mint print transaction
+ * @param {number} galleryId
+ * @param {number} artworkId
+ * @param {number} id
+ * @return {boolean} flase to include signature
+ */
+export const getMintPrintEverbloomv2Arguments = (galleryId, artworkId, id = 1, addSignature = true) => {
+  let signature;
+
+  if (addSignature) {
+    signature = `SIGNATURE_${id}`
+  }
+  const metadata = {};
+
+  return [galleryId, artworkId, signature, metadata];
 }
