@@ -242,7 +242,7 @@ pub contract EverbloomV2: NonFungibleToken {
         if (artwork != nil) {
             let metadata = artwork!.getMetadata()
             return MetadataViews.Display(
-                name: metadata["name"] ?? "",
+                name: metadata["name"] ?? metadata["creatorName"]?.concat(" on Everbloom") ?? "",
                 description: metadata["description"] ?? "",
                 thumbnail: MetadataViews.HTTPFile(url: metadata["thumbnail"] ?? metadata["image"] ?? "")
             )
@@ -256,7 +256,7 @@ pub contract EverbloomV2: NonFungibleToken {
         if (artwork != nil) {
             let metadata = artwork.getMetadata()
             return EverbloomMetadata.EverbloomMetadataView(
-                name: metadata["name"],
+                name: metadata["name"] ?? metadata["creatorName"]?.concat(" on Everbloom") ?? "",
                 description: metadata["description"],
                 image: MetadataViews.HTTPFile(url: metadata["image"] ?? ""),
                 thumbnail: MetadataViews.HTTPFile(url: metadata["thumbnail"] ?? metadata["image"] ?? ""),
@@ -314,12 +314,15 @@ pub contract EverbloomV2: NonFungibleToken {
         access(self) let perks: [EverbloomMetadata.Perk]
         // Additional Metadata
         access(self) let metadata: {String: String}
+        // ids of NFTs in Buildin Block Contract
+        access(self) let buildingBlockIds: [UInt64]
 
         init(
             galleryID: UInt32,
             externalPostID: String,
             perks: [EverbloomMetadata.Perk],
-            metadata: {String: String}
+            metadata: {String: String},
+            buildingBlockIds: [UInt64]
         ) {
         	pre {
         		metadata.length != 0: "Artwork metadata cannot be empty"
@@ -330,6 +333,7 @@ pub contract EverbloomV2: NonFungibleToken {
         	self.perks = perks
         	self.metadata = metadata
         	self.externalPostID = externalPostID
+        	self.buildingBlockIds = buildingBlockIds
         }
 
         pub fun getMetadata(): {String: String} {
@@ -386,7 +390,12 @@ pub contract EverbloomV2: NonFungibleToken {
 
 			return artworkID: id of the artwork
 		*/
-		pub fun createArtwork(externalPostID: String, perkDatas: [EverbloomMetadata.PerkData], metadata: {String: String}): UInt32 {
+		pub fun createArtwork(
+		    externalPostID: String,
+		    perkDatas: [EverbloomMetadata.PerkData],
+		    metadata: {String: String},
+		    buildingBlockIds: [UInt64],
+		): UInt32 {
 			pre {
 				self.artworks.length < Int(EverbloomV2.maxArtLimit):
 				"Cannot create artwork. Maximum number of artworks in gallery is ".concat(EverbloomV2.maxArtLimit.toString())
@@ -415,7 +424,8 @@ pub contract EverbloomV2: NonFungibleToken {
 			    galleryID: self.galleryID,
 			    externalPostID: externalPostID,
 			    perks: perks as! [EverbloomMetadata.Perk],
-			    metadata: metadata
+			    metadata: metadata,
+			    buildingBlockIds: buildingBlockIds
 			)
             // Increment the ID so that it isn't used again
             EverbloomV2.nextArtworkID = EverbloomV2.nextArtworkID + UInt32(1)
