@@ -38,7 +38,9 @@ transaction (
     self.galleryRef.createArtwork(
       externalPostID: externalPostID,
       perkDatas: perkDatas,
-      metadata: metadata
+      metadata: metadata,
+      // buildingBlockIds functionality will be implemented once Building block contract is ready
+      buildingBlockIds: []
     )
   }
 }
