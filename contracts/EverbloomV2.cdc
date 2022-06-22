@@ -318,36 +318,16 @@ pub contract EverbloomV2: NonFungibleToken {
         init(
             galleryID: UInt32,
             externalPostID: String,
-            perkDatas: [EverbloomMetadata.PerkData],
+            perks: [EverbloomMetadata.Perk],
             metadata: {String: String}
         ) {
         	pre {
         		metadata.length != 0: "Artwork metadata cannot be empty"
         	}
-        	var perks: [EverbloomMetadata.Perk] = []
-
-        	if (perkDatas.length > Int(EverbloomV2.maxPerkLimit)) {
-        	    panic("Cannot add create artwork. Maximum number of perks is ".concat(EverbloomV2.maxPerkLimit.toString()))
-        	}
-
-        	for perkData in perkDatas {
-                let perk = EverbloomMetadata.Perk(
-                    perkID: EverbloomV2.nextPerkID,
-                    type: perkData.type,
-                    title: perkData.title,
-                    description: perkData.description,
-                    url: perkData.url,
-                    isValid: nil
-                )
-
-                EverbloomV2.nextPerkID = EverbloomV2.nextPerkID + UInt32(1)
-                perks.append(perk);
-                EverbloomV2.validPerks[perk.perkID] = true
-            }
 
         	self.galleryID = galleryID
         	self.artworkID = EverbloomV2.nextArtworkID
-        	self.perks = perks as! [EverbloomMetadata.Perk]
+        	self.perks = perks
         	self.metadata = metadata
         	self.externalPostID = externalPostID
         }
@@ -409,13 +389,32 @@ pub contract EverbloomV2: NonFungibleToken {
 		pub fun createArtwork(externalPostID: String, perkDatas: [EverbloomMetadata.PerkData], metadata: {String: String}): UInt32 {
 			pre {
 				self.artworks.length < Int(EverbloomV2.maxArtLimit):
-				"Cannot add create artwork. Maximum number of Artworks in gallery is ".concat(EverbloomV2.maxArtLimit.toString())
+				"Cannot create artwork. Maximum number of artworks in gallery is ".concat(EverbloomV2.maxArtLimit.toString())
+				perkDatas.length < Int(EverbloomV2.maxPerkLimit):
+                "Cannot create artwork. Maximum number of perks in an artwork is ".concat(EverbloomV2.maxPerkLimit.toString())
 			}
+			//compile perkdata
+            var perks: [EverbloomMetadata.Perk] = []
+
+            for perkData in perkDatas {
+                perks.append(EverbloomMetadata.Perk(
+                    perkID: EverbloomV2.nextPerkID,
+                    type: perkData.type,
+                    title: perkData.title,
+                    description: perkData.description,
+                    url: perkData.url,
+                    isValid: nil
+                ));
+
+                EverbloomV2.validPerks[EverbloomV2.nextPerkID] = true
+                EverbloomV2.nextPerkID = EverbloomV2.nextPerkID + UInt32(1)
+            }
+
 			// Create the new Artwork
 			var newArtwork: Artwork = Artwork(
 			    galleryID: self.galleryID,
 			    externalPostID: externalPostID,
-			    perkDatas: perkDatas,
+			    perks: perks as! [EverbloomMetadata.Perk],
 			    metadata: metadata
 			)
             // Increment the ID so that it isn't used again
