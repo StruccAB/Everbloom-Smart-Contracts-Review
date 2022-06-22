@@ -1,12 +1,12 @@
-import EverbloomV2 from "../../contracts/EverbloomV2.cdc"
+import Everbloom2 from "../../contracts/Everbloom2.cdc"
 
 // This transaction will disable a perk
 
 transaction (perkID: UInt32) {
-  let adminRef: &EverbloomV2.Admin
+  let adminRef: &Everbloom2.Admin
 
   prepare(acct: AuthAccount) {
-    self.adminRef = acct.borrow<&EverbloomV2.Admin>(from: EverbloomV2.AdminStoragePath)
+    self.adminRef = acct.borrow<&Everbloom2.Admin>(from: Everbloom2.AdminStoragePath)
     ?? panic("Could not borrow admin reference")
   }
 

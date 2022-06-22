@@ -1,4 +1,4 @@
-import EverbloomV2 from "../../../contracts/EverbloomV2.cdc"
+import Everbloom2 from "../../../contracts/Everbloom2.cdc"
 import EverbloomMetadata from "../../../contracts/EverbloomMetadata.cdc"
 
 // Transaction to create a new Artwork resource in Gallery resource
@@ -9,12 +9,12 @@ transaction (
   argMetadata: {String: String},
   perks: [{String: String}]
   ) {
-  let userRef: &EverbloomV2.User
-  let galleryRef: &EverbloomV2.Gallery
+  let userRef: &Everbloom2.User
+  let galleryRef: &Everbloom2.Gallery
   let ownerAddress: Address;
 
   prepare(acct: AuthAccount) {
-    self.userRef = acct.borrow<&EverbloomV2.User>(from: EverbloomV2.UserStoragePath)
+    self.userRef = acct.borrow<&Everbloom2.User>(from: Everbloom2.UserStoragePath)
             ?? panic("Could not borrow a reference to the user")
     self.galleryRef = self.userRef.borrowGallery(galleryID: galleryID)
       ?? panic("Could not borrow a reference to the gallery")

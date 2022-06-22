@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 /*
-	Description: Central Smart Contract for EverbloomV2
+	Description: Central Smart Contract for Everbloom2
 	Authors: Shehryar Shoukat shehryar@everbloom.app
 
-	This contract contains the core functionality of EverbloomV2 DApp
+	This contract contains the core functionality of Everbloom2 DApp
 
 	The contract manages the data associated with all the galleries, and
 	artworks that are used as templates for the Print NFTs.
@@ -34,23 +34,23 @@ import NonFungibleToken from "./NonFungibleToken.cdc"
 import MetadataViews from "./MetadataViews.cdc"
 import EverbloomMetadata from "./EverbloomMetadata.cdc"
 
-pub contract EverbloomV2: NonFungibleToken {
+pub contract Everbloom2: NonFungibleToken {
 	// -----------------------------------------------------------------------
-	// EverbloomV2 contract Events
+	// Everbloom2 contract Events
 	// -----------------------------------------------------------------------
 
-	// Emitted when the EverbloomV2 contract is created
+	// Emitted when the Everbloom2 contract is created
 	pub event ContractInitialized()
 
 	// --- NFT Standard Events ---
-	// Emitted on EverbloomV2 NFT Withdrawal
+	// Emitted on Everbloom2 NFT Withdrawal
 	pub event Withdraw(id: UInt64, from: Address?)
-	// Emitted on EverbloomV2 NFT transfer
+	// Emitted on Everbloom2 NFT transfer
 	pub event Transfer(id: UInt64, from: Address?, to: Address?)
-	// Emitted on EverbloomV2 NFT deposit
+	// Emitted on Everbloom2 NFT deposit
 	pub event Deposit(id: UInt64, to: Address?)
 
-	// --- EverbloomV2 Event ---
+	// --- Everbloom2 Event ---
 	// Emitted when an NFT (print) is minted
 	pub event PrintNFTMinted(
 		nftID: UInt64,
@@ -77,7 +77,7 @@ pub contract EverbloomV2: NonFungibleToken {
 	pub event UserCreated(userID: UInt64)
 
 	// -----------------------------------------------------------------------
-	// EverbloomV2 contract-level fields
+	// Everbloom2 contract-level fields
 	// -----------------------------------------------------------------------
 
 	// Storage Paths
@@ -134,7 +134,7 @@ pub contract EverbloomV2: NonFungibleToken {
 
 
 	// -----------------------------------------------------------------------
-	// EverbloomV2 contract-level Composite Type definitions
+	// Everbloom2 contract-level Composite Type definitions
 	// -----------------------------------------------------------------------
 
 	// PrintData is a Struct that holds metadata associated with Print NFT
@@ -180,9 +180,9 @@ pub contract EverbloomV2: NonFungibleToken {
 			metadata: {String: String},
 			royalties: [MetadataViews.Royalty]
 		) {
-			EverbloomV2.totalSupply = EverbloomV2.totalSupply + UInt64(1)
+			Everbloom2.totalSupply = Everbloom2.totalSupply + UInt64(1)
 
-			self.id = EverbloomV2.totalSupply
+			self.id = Everbloom2.totalSupply
 			self.data = PrintData(
 				galleryID: galleryID,
 				artworkID: artworkID,
@@ -192,7 +192,7 @@ pub contract EverbloomV2: NonFungibleToken {
 				metadata: metadata,
 			)
 			self.royalties = royalties
-			EverbloomV2.externalPrintIDMap[externalPrintID] = self.id
+			Everbloom2.externalPrintIDMap[externalPrintID] = self.id
 
 			emit PrintNFTMinted(
 				nftID: self.id,
@@ -216,13 +216,13 @@ pub contract EverbloomV2: NonFungibleToken {
         pub fun resolveView(_ view: Type): AnyStruct? {
             switch view {
                 case Type<MetadataViews.Display>():
-                    return EverbloomV2.getDisplayView(data: self.data)
+                    return Everbloom2.getDisplayView(data: self.data)
                 case Type<MetadataViews.Royalties>():
                     return MetadataViews.Royalties(self.royalties)
                 case Type<EverbloomMetadata.EverbloomMetadataView>():
-                    return EverbloomV2.getPrintView(data: self.data);
+                    return Everbloom2.getPrintView(data: self.data);
                 case Type<EverbloomMetadata.PerksView>():
-                    return EverbloomV2.getPerksView(data: self.data);
+                    return Everbloom2.getPerksView(data: self.data);
             }
             return nil
         }
@@ -238,7 +238,7 @@ pub contract EverbloomV2: NonFungibleToken {
 
 
 	pub fun getDisplayView(data: PrintData): MetadataViews.Display? {
-        let artwork = EverbloomV2.getArtwork(artworkID: data.artworkID)
+        let artwork = Everbloom2.getArtwork(artworkID: data.artworkID)
         if (artwork != nil) {
             let metadata = artwork!.getMetadata()
             return MetadataViews.Display(
@@ -252,7 +252,7 @@ pub contract EverbloomV2: NonFungibleToken {
     }
 
     pub fun getPrintView(data: PrintData): EverbloomMetadata.EverbloomMetadataView? {
-        let artwork = (EverbloomV2.getArtwork(artworkID: data.artworkID))!
+        let artwork = (Everbloom2.getArtwork(artworkID: data.artworkID))!
         if (artwork != nil) {
             let metadata = artwork.getMetadata()
             return EverbloomMetadata.EverbloomMetadataView(
@@ -271,7 +271,7 @@ pub contract EverbloomV2: NonFungibleToken {
                 externalPrintId: data.externalPrintID,
                 rarity: metadata["rarity"],
                 serialNumber: data.serialNumber,
-                totalPrintMinted: EverbloomV2.getArtworkNftCount(artworkID: data.artworkID)
+                totalPrintMinted: Everbloom2.getArtworkNftCount(artworkID: data.artworkID)
             )
         }
 
@@ -279,7 +279,7 @@ pub contract EverbloomV2: NonFungibleToken {
     }
 
     pub fun getPerksView(data: PrintData): EverbloomMetadata.PerksView? {
-        let artwork = EverbloomV2.getArtwork(artworkID: data.artworkID)
+        let artwork = Everbloom2.getArtwork(artworkID: data.artworkID)
         if (artwork != nil) {
             var perks: [EverbloomMetadata.Perk] = []
             for perk in artwork!.getPerks() {
@@ -289,7 +289,7 @@ pub contract EverbloomV2: NonFungibleToken {
                     title: perk.title,
                     description: perk.description,
                     url: perk.url,
-                    isValid: EverbloomV2.validPerks[perk.perkID]
+                    isValid: Everbloom2.validPerks[perk.perkID]
                 ));
             }
 
@@ -303,14 +303,14 @@ pub contract EverbloomV2: NonFungibleToken {
 
 		Artwork struct contains metadata of the artwork
 
-	   A Post on EverbloomV2 platform represent an Artwork
+	   A Post on Everbloom2 platform represent an Artwork
 	*/
 	pub struct Artwork {
 		pub let galleryID: UInt32
 		pub let artworkID: UInt32
-		// externalPostID is the ID of a post in EverbloomV2 Platform
+		// externalPostID is the ID of a post in Everbloom2 Platform
         pub let externalPostID: String
-        // traits provided by the artwork creator and EverbloomV2
+        // traits provided by the artwork creator and Everbloom2
         access(self) let perks: [EverbloomMetadata.Perk]
         // Additional Metadata
         access(self) let metadata: {String: String}
@@ -329,7 +329,7 @@ pub contract EverbloomV2: NonFungibleToken {
         	}
 
         	self.galleryID = galleryID
-        	self.artworkID = EverbloomV2.nextArtworkID
+        	self.artworkID = Everbloom2.nextArtworkID
         	self.perks = perks
         	self.metadata = metadata
         	self.externalPostID = externalPostID
@@ -357,7 +357,7 @@ pub contract EverbloomV2: NonFungibleToken {
 		gallery resource contains methods for addition of new artworks, borrowing of artworks,
 		enabling, and disabling of Gallery
 
-	   A gallery on EverbloomV2 platform represent an Gallery resource
+	   A gallery on Everbloom2 platform represent an Gallery resource
 	*/
 	pub resource Gallery: GalleryPublic {
 		pub let galleryID: UInt32
@@ -369,7 +369,7 @@ pub contract EverbloomV2: NonFungibleToken {
 		pub var name: String
 
 		init(name: String) {
-			self.galleryID = EverbloomV2.nextGalleryID
+			self.galleryID = Everbloom2.nextGalleryID
 			self.artworks = []
 			self.artworksLocked = {}
 			self.name = name
@@ -382,7 +382,7 @@ pub contract EverbloomV2: NonFungibleToken {
 		/* This method creates and add new artwork
 
 			parameter:
-			  externalPostID: EverbloomV2 post id
+			  externalPostID: Everbloom2 post id
 			  metadata: metadata of the artwork
 
 			Pre-Conditions:
@@ -397,17 +397,17 @@ pub contract EverbloomV2: NonFungibleToken {
 		    buildingBlockIds: [UInt64],
 		): UInt32 {
 			pre {
-				self.artworks.length < Int(EverbloomV2.maxArtLimit):
-				"Cannot create artwork. Maximum number of artworks in gallery is ".concat(EverbloomV2.maxArtLimit.toString())
-				perkDatas.length < Int(EverbloomV2.maxPerkLimit):
-                "Cannot create artwork. Maximum number of perks in an artwork is ".concat(EverbloomV2.maxPerkLimit.toString())
+				self.artworks.length < Int(Everbloom2.maxArtLimit):
+				"Cannot create artwork. Maximum number of artworks in gallery is ".concat(Everbloom2.maxArtLimit.toString())
+				perkDatas.length < Int(Everbloom2.maxPerkLimit):
+                "Cannot create artwork. Maximum number of perks in an artwork is ".concat(Everbloom2.maxPerkLimit.toString())
 			}
 			//compile perkdata
             var perks: [EverbloomMetadata.Perk] = []
 
             for perkData in perkDatas {
                 perks.append(EverbloomMetadata.Perk(
-                    perkID: EverbloomV2.nextPerkID,
+                    perkID: Everbloom2.nextPerkID,
                     type: perkData.type,
                     title: perkData.title,
                     description: perkData.description,
@@ -415,8 +415,8 @@ pub contract EverbloomV2: NonFungibleToken {
                     isValid: nil
                 ));
 
-                EverbloomV2.validPerks[EverbloomV2.nextPerkID] = true
-                EverbloomV2.nextPerkID = EverbloomV2.nextPerkID + UInt32(1)
+                Everbloom2.validPerks[Everbloom2.nextPerkID] = true
+                Everbloom2.nextPerkID = Everbloom2.nextPerkID + UInt32(1)
             }
 
 			// Create the new Artwork
@@ -428,7 +428,7 @@ pub contract EverbloomV2: NonFungibleToken {
 			    buildingBlockIds: buildingBlockIds
 			)
             // Increment the ID so that it isn't used again
-            EverbloomV2.nextArtworkID = EverbloomV2.nextArtworkID + UInt32(1)
+            Everbloom2.nextArtworkID = Everbloom2.nextArtworkID + UInt32(1)
 			emit ArtworkCreated(
 				artworkID: newArtwork.artworkID,
 				galleryID: self.galleryID,
@@ -442,10 +442,10 @@ pub contract EverbloomV2: NonFungibleToken {
 			self.artworksLocked[newID] = false
 
 			// update contract level data
-			EverbloomV2.artworkDatas[newID] = newArtwork
-			EverbloomV2.externalPostIDMap[externalPostID] = newID
-			EverbloomV2.numberMintedPerArtwork[newID] = 0;
-			EverbloomV2.artworkCompleted[newID] = false;
+			Everbloom2.artworkDatas[newID] = newArtwork
+			Everbloom2.externalPostIDMap[externalPostID] = newID
+			Everbloom2.numberMintedPerArtwork[newID] = 0;
+			Everbloom2.artworkCompleted[newID] = false;
 
 			return newID
 		}
@@ -462,8 +462,8 @@ pub contract EverbloomV2: NonFungibleToken {
             if !self.artworksLocked[artworkID]! {
                	self.artworksLocked[artworkID] = true
 
-               	EverbloomV2.artworkCompleted[artworkID] = true
-                emit ArtworkCompleted(artworkID: artworkID, numOfArtworks: EverbloomV2.numberMintedPerArtwork[artworkID]!)
+               	Everbloom2.artworkCompleted[artworkID] = true
+                emit ArtworkCompleted(artworkID: artworkID, numOfArtworks: Everbloom2.numberMintedPerArtwork[artworkID]!)
             }
 		}
 
@@ -480,7 +480,7 @@ pub contract EverbloomV2: NonFungibleToken {
 	// Any user can borrow the public reference of other user resource
 	pub resource interface UserPublic {
 		pub fun getAllGalleries(): [UInt32]
-		pub fun borrowGallery(galleryID: UInt32): &Gallery{EverbloomV2.GalleryPublic}?
+		pub fun borrowGallery(galleryID: UInt32): &Gallery{Everbloom2.GalleryPublic}?
 		pub fun setMinterCapability(minterCapability: Capability<&Minter>)
 	}
 
@@ -490,7 +490,7 @@ pub contract EverbloomV2: NonFungibleToken {
 		User resource contains methods for addition of new galleries, borrowing of galleries,
 		and minting of prints.
 
-	   A profile on EverbloomV2 platform represent a User resource
+	   A profile on Everbloom2 platform represent a User resource
 	*/
 	pub resource User: UserPublic {
 		pub let userID: UInt64
@@ -500,11 +500,11 @@ pub contract EverbloomV2: NonFungibleToken {
 		access(self) var minterCapability: Capability<&Minter>?
 
 		init() {
-			self.userID = EverbloomV2.nextUserID
+			self.userID = Everbloom2.nextUserID
 			self.galleries <- {}
 			self.minterCapability = nil
 
-			EverbloomV2.nextUserID = EverbloomV2.nextUserID + UInt64(1)
+			Everbloom2.nextUserID = Everbloom2.nextUserID + UInt64(1)
 
 			emit UserCreated(userID: self.userID)
 		}
@@ -549,12 +549,12 @@ pub contract EverbloomV2: NonFungibleToken {
             }
 
 			// Create the new Gallery
-			var newGallery <- create EverbloomV2.Gallery(name: name)
+			var newGallery <- create Everbloom2.Gallery(name: name)
 			let newGalleryID = newGallery.galleryID
 			// Store it in the galleries mapping field
 			self.galleries[newGalleryID] <-! newGallery
 
-			EverbloomV2.nextGalleryID = EverbloomV2.nextGalleryID + UInt32(1)
+			Everbloom2.nextGalleryID = Everbloom2.nextGalleryID + UInt32(1)
 			emit GalleryCreated(galleryID: newGalleryID, name: name)
 
 			return newGalleryID
@@ -584,10 +584,10 @@ pub contract EverbloomV2: NonFungibleToken {
 				panic("Cannot mint the print from this artwork: This artwork has been marked as completed.")
 			}
 
-			let numOfArtworks = EverbloomV2.getArtworkNftCount(artworkID: artworkID)!
+			let numOfArtworks = Everbloom2.getArtworkNftCount(artworkID: artworkID)!
 
 			var minterCapability: Capability<&Minter> = self.minterCapability ?? panic("Minting capability not found")
-			let minterRef: &EverbloomV2.Minter = minterCapability.borrow() ?? panic("Cannot borrow minting resource")
+			let minterRef: &Everbloom2.Minter = minterCapability.borrow() ?? panic("Cannot borrow minting resource")
 
 			let newPrint: @NFT <- minterRef.mintNFT(
 				galleryID: galleryID,
@@ -599,7 +599,7 @@ pub contract EverbloomV2: NonFungibleToken {
                 royalties: royalties
 			)
 
-			EverbloomV2.numberMintedPerArtwork[artworkID] = EverbloomV2.numberMintedPerArtwork[artworkID]! + UInt32(1)
+			Everbloom2.numberMintedPerArtwork[artworkID] = Everbloom2.numberMintedPerArtwork[artworkID]! + UInt32(1)
 
 			return <-newPrint
 		}
@@ -617,8 +617,8 @@ pub contract EverbloomV2: NonFungibleToken {
 		    royalties: [MetadataViews.Royalty]
 	    ): @Collection {
 			pre {
-				externalPrintIDs.length < Int(EverbloomV2.maxBatchMintSize):
-				"Maximum number of NFT that can be minted in a batch is ".concat(EverbloomV2.maxBatchMintSize.toString())
+				externalPrintIDs.length < Int(Everbloom2.maxBatchMintSize):
+				"Maximum number of NFT that can be minted in a batch is ".concat(Everbloom2.maxBatchMintSize.toString())
 			}
 
 			let newCollection <- create Collection()
@@ -656,7 +656,7 @@ pub contract EverbloomV2: NonFungibleToken {
 			signature: String?,
 			metadata: {String: String},
             royalties: [MetadataViews.Royalty]
-		) : @EverbloomV2.NFT {
+		) : @Everbloom2.NFT {
 			let newPrint: @NFT <- create NFT(
 				galleryID: galleryID,
 				artworkID: artworkID,
@@ -690,12 +690,12 @@ pub contract EverbloomV2: NonFungibleToken {
 		}
 
 		pub fun invalidatePerk(perkID: UInt32) {
-		    EverbloomV2.validPerks[perkID] = false
+		    Everbloom2.validPerks[perkID] = false
 		}
 	}
 
 	// -----------------------------------------------------------------------
-	// EverbloomV2 Collection Logic
+	// Everbloom2 Collection Logic
 	// -----------------------------------------------------------------------
 
 
@@ -706,7 +706,7 @@ pub contract EverbloomV2: NonFungibleToken {
 		pub fun batchDeposit(tokens: @NonFungibleToken.Collection)
 		pub fun getIDs(): [UInt64]
 		pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT
-		pub fun borrowPrint(id: UInt64): &EverbloomV2.NFT? {
+		pub fun borrowPrint(id: UInt64): &Everbloom2.NFT? {
 			// If the result isn't nil, the id of the returned reference
 			// should be the same as the argument to the function
 			post {
@@ -751,8 +751,8 @@ pub contract EverbloomV2: NonFungibleToken {
 		*/
 		pub fun batchWithdraw(ids: [UInt64]): @NonFungibleToken.Collection {
 			pre {
-				ids.length < Int(EverbloomV2.maxBatchWithdrawalSize):
-				"Maximum number of NFT that can be withdraw in a batch is ".concat(EverbloomV2.maxBatchWithdrawalSize.toString())
+				ids.length < Int(Everbloom2.maxBatchWithdrawalSize):
+				"Maximum number of NFT that can be withdraw in a batch is ".concat(Everbloom2.maxBatchWithdrawalSize.toString())
 			}
 
 			// Create a new empty Collection
@@ -773,9 +773,9 @@ pub contract EverbloomV2: NonFungibleToken {
 		*/
 		pub fun deposit(token: @NonFungibleToken.NFT) {
 
-			// Cast the deposited token as a EverbloomV2 NFT to make sure
+			// Cast the deposited token as a Everbloom2 NFT to make sure
 			// it is the correct type
-			let token <- token as! @EverbloomV2.NFT
+			let token <- token as! @Everbloom2.NFT
 
 			// Get the token's ID
 			let id = token.id
@@ -797,8 +797,8 @@ pub contract EverbloomV2: NonFungibleToken {
 		// and deposits each contained NFT into this Collection
 		pub fun batchDeposit(tokens: @NonFungibleToken.Collection) {
 			pre {
-				tokens.getIDs().length < Int(EverbloomV2.maxBatchDepositSize):
-				"Maximum number of NFT that can be deposited in a batch is ".concat(EverbloomV2.maxBatchDepositSize.toString())
+				tokens.getIDs().length < Int(Everbloom2.maxBatchDepositSize):
+				"Maximum number of NFT that can be deposited in a batch is ".concat(Everbloom2.maxBatchDepositSize.toString())
 			}
 
 			// Get an array of the IDs to be deposited
@@ -851,10 +851,10 @@ pub contract EverbloomV2: NonFungibleToken {
 
 			Returns: A reference to the NFT
 		*/
-		pub fun borrowPrint(id: UInt64): &EverbloomV2.NFT? {
+		pub fun borrowPrint(id: UInt64): &Everbloom2.NFT? {
 			if self.ownedNFTs[id] != nil {
 				let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
-				return ref as! &EverbloomV2.NFT
+				return ref as! &Everbloom2.NFT
 			} else {
 				return nil
 			}
@@ -862,7 +862,7 @@ pub contract EverbloomV2: NonFungibleToken {
 
 		pub fun borrowViewResolver(id: UInt64): &AnyResource{MetadataViews.Resolver} {
             let nft = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
-            let print = nft as! &EverbloomV2.NFT
+            let print = nft as! &Everbloom2.NFT
 
             return print as &AnyResource{MetadataViews.Resolver}
         }
@@ -875,7 +875,7 @@ pub contract EverbloomV2: NonFungibleToken {
 	}
 
 	// -----------------------------------------------------------------------
-	// EverbloomV2 contract-level function definitions
+	// Everbloom2 contract-level function definitions
 	// -----------------------------------------------------------------------
 
 	/* This method creates new User resource
@@ -891,37 +891,37 @@ pub contract EverbloomV2: NonFungibleToken {
 		return @NonFungibleToken.Collection: collection resource
 	*/
 	pub fun createEmptyCollection(): @NonFungibleToken.Collection {
-		return <-create EverbloomV2.Collection()
+		return <-create Everbloom2.Collection()
 	}
 
 	pub fun getArtworkIdByExternalPostId(externalPostID: String): UInt32? {
-        return EverbloomV2.externalPostIDMap[externalPostID];
+        return Everbloom2.externalPostIDMap[externalPostID];
     }
 
     pub fun getNftIDByExternalPrintID(externalPrintID: String): UInt64? {
-        return EverbloomV2.externalPrintIDMap[externalPrintID];
+        return Everbloom2.externalPrintIDMap[externalPrintID];
     }
 
 	pub fun getArtwork(artworkID: UInt32): Artwork? {
-    	if EverbloomV2.artworkDatas[artworkID] != nil {
-    		let artwork = EverbloomV2.artworkDatas[artworkID] as Artwork?
+    	if Everbloom2.artworkDatas[artworkID] != nil {
+    		let artwork = Everbloom2.artworkDatas[artworkID] as Artwork?
     		return artwork
     	} else {
     		return nil
     	}
     }
 
-    /* This method returns an Artwork using the id of the post in EverbloomV2 platform
+    /* This method returns an Artwork using the id of the post in Everbloom2 platform
 
-    	parameters: externalPostID: id of the post in EverbloomV2 platform
+    	parameters: externalPostID: id of the post in Everbloom2 platform
 
     	return artwork or nil if no artwork is found
     */
     pub fun getArtworkByPostID(externalPostID: String): Artwork? {
-        let artworkID: UInt32? = EverbloomV2.externalPostIDMap[externalPostID]
+        let artworkID: UInt32? = Everbloom2.externalPostIDMap[externalPostID]
 
     	if artworkID != nil {
-    	    return EverbloomV2.getArtwork(artworkID: artworkID!) as Artwork?
+    	    return Everbloom2.getArtwork(artworkID: artworkID!) as Artwork?
     	} else {
     	    return nil
     	}
@@ -929,22 +929,22 @@ pub contract EverbloomV2: NonFungibleToken {
 
     pub fun getArtworkNftCount(artworkID: UInt32): UInt32 {
     	pre {
-    		EverbloomV2.numberMintedPerArtwork[artworkID] != nil: "Artwork does not exist"
+    		Everbloom2.numberMintedPerArtwork[artworkID] != nil: "Artwork does not exist"
     	}
 
-    	return EverbloomV2.numberMintedPerArtwork[artworkID]!
+    	return Everbloom2.numberMintedPerArtwork[artworkID]!
     }
 
 	pub fun isArtworkCompleted(artworkID: UInt32): Bool {
 		pre {
-			EverbloomV2.artworkCompleted[artworkID] != nil: "Artwork doesn't exist."
+			Everbloom2.artworkCompleted[artworkID] != nil: "Artwork doesn't exist."
 		}
 
-		return EverbloomV2.artworkCompleted[artworkID]!
+		return Everbloom2.artworkCompleted[artworkID]!
 	}
 
 	// -----------------------------------------------------------------------
-	// EverbloomV2 initialization function
+	// Everbloom2 initialization function
 	// -----------------------------------------------------------------------
 	//
 	init() {
@@ -967,13 +967,13 @@ pub contract EverbloomV2: NonFungibleToken {
 		self.validPerks = {}
 
 		// set contract paths
-		self.CollectionStoragePath = /storage/EverbloomV2Collection
-		self.CollectionPublicPath = /public/EverbloomV2Collection
-		self.AdminStoragePath = /storage/EverbloomV2Admin
-		self.UserStoragePath = /storage/EverbloomV2User
-		self.UserPublicPath = /public/EverbloomV2User
-		self.MinterStoragePath = /storage/EverbloomV2Minter
-		self.MinterPrivatePath =  /private/EverbloomV2Minter
+		self.CollectionStoragePath = /storage/Everbloom2Collection
+		self.CollectionPublicPath = /public/Everbloom2Collection
+		self.AdminStoragePath = /storage/Everbloom2Admin
+		self.UserStoragePath = /storage/Everbloom2User
+		self.UserPublicPath = /public/Everbloom2User
+		self.MinterStoragePath = /storage/Everbloom2Minter
+		self.MinterPrivatePath =  /private/Everbloom2Minter
 
 		// store admin resource in admin account
 		self.account.save<@Admin>(<- create Admin(), to: self.AdminStoragePath)

@@ -1,12 +1,12 @@
-import EverbloomV2 from "../../../contracts/EverbloomV2.cdc"
+import Everbloom2 from "../../../contracts/Everbloom2.cdc"
 
 // Transaction to create a new Gallery resource in User resource
 
 transaction (name: String) {
-  let userRef: &EverbloomV2.User
+  let userRef: &Everbloom2.User
 
   prepare(acct: AuthAccount) {
-    self.userRef = acct.borrow<&EverbloomV2.User>(from: EverbloomV2.UserStoragePath)
+    self.userRef = acct.borrow<&Everbloom2.User>(from: Everbloom2.UserStoragePath)
         ?? panic("Could not borrow a reference to the user")
   }
 

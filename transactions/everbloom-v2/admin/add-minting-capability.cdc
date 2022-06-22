@@ -1,21 +1,21 @@
-import EverbloomV2 from "../../../contracts/EverbloomV2.cdc"
+import Everbloom2 from "../../../contracts/Everbloom2.cdc"
 
 transaction (userAddress: Address) {
-  let minterCapability: Capability<&EverbloomV2.Minter>
+  let minterCapability: Capability<&Everbloom2.Minter>
 
   prepare(acct: AuthAccount) {
     pre {
-      acct.borrow<&EverbloomV2.Admin>(from: EverbloomV2.AdminStoragePath) != nil: "Could not borrow admin reference"
-      acct.borrow<&EverbloomV2.Minter>(from: EverbloomV2.MinterStoragePath) != nil: "Could not borrow minter reference"
+      acct.borrow<&Everbloom2.Admin>(from: Everbloom2.AdminStoragePath) != nil: "Could not borrow admin reference"
+      acct.borrow<&Everbloom2.Minter>(from: Everbloom2.MinterStoragePath) != nil: "Could not borrow minter reference"
     }
 
-    self.minterCapability = acct.getCapability<&EverbloomV2.Minter>(EverbloomV2.MinterPrivatePath)
+    self.minterCapability = acct.getCapability<&Everbloom2.Minter>(Everbloom2.MinterPrivatePath)
   }
 
   execute {
     let userPublic = getAccount(userAddress)
-      .getCapability(EverbloomV2.UserPublicPath)
-      .borrow<&{EverbloomV2.UserPublic}>()
+      .getCapability(Everbloom2.UserPublicPath)
+      .borrow<&{Everbloom2.UserPublic}>()
         ?? panic("Could not get user public reference")
     userPublic.setMinterCapability(minterCapability: self.minterCapability)
   }

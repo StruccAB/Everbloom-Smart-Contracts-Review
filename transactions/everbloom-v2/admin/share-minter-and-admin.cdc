@@ -1,25 +1,25 @@
-import EverbloomV2 from "../../../contracts/EverbloomV2.cdc"
+import Everbloom2 from "../../../contracts/Everbloom2.cdc"
 
 // This transaction will create a Minter resource and Admin reosurce and share with the second signer
 
 transaction () {
-  let adminRef: &EverbloomV2.Admin
+  let adminRef: &Everbloom2.Admin
 
   prepare(acct: AuthAccount, acct2: AuthAccount) {
-    self.adminRef = acct.borrow<&EverbloomV2.Admin>(from: EverbloomV2.AdminStoragePath)
+    self.adminRef = acct.borrow<&Everbloom2.Admin>(from: Everbloom2.AdminStoragePath)
     ?? panic("Could not borrow admin reference")
 
-     if acct2.borrow<&EverbloomV2.Admin>(from: EverbloomV2.AdminStoragePath)  == nil {
+     if acct2.borrow<&Everbloom2.Admin>(from: Everbloom2.AdminStoragePath)  == nil {
         let admin <- self.adminRef.createNewAdmin()
 
-        acct2.save<@EverbloomV2.Admin>(<-admin, to: EverbloomV2.AdminStoragePath)
+        acct2.save<@Everbloom2.Admin>(<-admin, to: Everbloom2.AdminStoragePath)
      }
 
-    if acct2.borrow<&EverbloomV2.Minter>(from: EverbloomV2.MinterStoragePath) == nil {
+    if acct2.borrow<&Everbloom2.Minter>(from: Everbloom2.MinterStoragePath) == nil {
       let minter <- self.adminRef.createNewMinter()
 
-      acct2.save(<-minter, to: EverbloomV2.MinterStoragePath)
-      acct2.link<&EverbloomV2.Minter>(EverbloomV2.MinterPrivatePath, target: EverbloomV2.MinterStoragePath)
+      acct2.save(<-minter, to: Everbloom2.MinterStoragePath)
+      acct2.link<&Everbloom2.Minter>(Everbloom2.MinterPrivatePath, target: Everbloom2.MinterStoragePath)
        ?? panic ("Could not minter reference")
     }
   }

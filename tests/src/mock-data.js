@@ -45,7 +45,7 @@ export const getCreateArtworkArgument = (galleryId, creatorName, id = 1) => {
  * @param {number} id
  * @return {boolean} flag to include perks
  */
-export const getCreateArtworkEverbloomv2Argument = (galleryId, creatorName, id = 1, addPerks = false) => {
+export const getCreateArtworkEverbloom2Argument = (galleryId, creatorName, id = 1, addPerks = false) => {
   const externalPostId = `EXTERNAL_POST_${id}`
   const metadata = {
     creatorName,
@@ -113,7 +113,7 @@ export const getMintPrintArguments = (galleryId, artworkId, editionId, id = 1) =
  * @param {number} id
  * @return {boolean} flase to include signature
  */
-export const getMintPrintEverbloomv2Arguments = (galleryId, artworkId, id = 1, addSignature = true) => {
+export const getMintPrintEverbloom2Arguments = (galleryId, artworkId, id = 1, addSignature = true) => {
   const externalPrintId = `EXTERNAL_PRINT_${id}`
   let signature;
 

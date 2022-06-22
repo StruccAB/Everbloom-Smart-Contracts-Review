@@ -8,7 +8,7 @@ import {
 } from "flow-js-testing";
 
 import {
-  deployEverbloomV2,
+  deployEverbloom2,
   getPrintCount,
   getEverblooomSupply,
   setupCollectionOnAccount,
@@ -38,9 +38,9 @@ import {
   getUserBobAddress,
 } from "../../src/common";
 import {
-  getCreateArtworkEverbloomv2Argument,
+  getCreateArtworkEverbloom2Argument,
   getCreateGalleryArguments,
-  getMintPrintArguments, getMintPrintEverbloomv2Arguments
+  getMintPrintArguments, getMintPrintEverbloom2Arguments
 } from "../../src/mock-data";
 
 // Increase timeout if your tests failing due to timeout
@@ -64,7 +64,7 @@ describe("everbloom V2", ()=>{
   });
 
   it("shall deploy Everbloom contract", async () => {
-    await deployEverbloomV2();
+    await deployEverbloom2();
   });
 
   it("Admin shall be able to create a new Minter", async () => {
@@ -141,7 +141,7 @@ describe("everbloom V2", ()=>{
   it("shall be able to create a new Artwork", async () => {
     const UserBob = await getUserBobAddress();
     const galleryId = await getLastGalleryId(UserBob)
-    const args = getCreateArtworkEverbloomv2Argument(galleryId, "Bob", 1, true)
+    const args = getCreateArtworkEverbloom2Argument(galleryId, "Bob", 1, true)
 
     await shallPass(createArtwork(UserBob, args))
 
@@ -173,7 +173,7 @@ describe("everbloom V2", ()=>{
     const UserBob = await getUserBobAddress();
     const galleryId = await getLastGalleryId(UserBob)
     const artworkId = await getLastArtworkId(UserBob, galleryId)
-    const args = getMintPrintEverbloomv2Arguments(galleryId, artworkId);
+    const args = getMintPrintEverbloom2Arguments(galleryId, artworkId);
 
     await shallPass(mintPrint(UserBob, args))
 
@@ -261,7 +261,7 @@ describe("everbloom V2", ()=>{
     const galleryId = await getLastGalleryId(UserBob)
     const artworkId = await getLastArtworkId(UserBob, galleryId)
 
-    await shallPass(mintPrint(UserBob, getMintPrintEverbloomv2Arguments(galleryId, artworkId)))
+    await shallPass(mintPrint(UserBob, getMintPrintEverbloom2Arguments(galleryId, artworkId)))
     const printId = await getLastPrintId(UserBob)
 
     await shallPass(setupCollectionOnAccount(UserAlice));

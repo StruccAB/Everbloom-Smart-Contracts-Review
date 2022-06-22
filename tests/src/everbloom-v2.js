@@ -7,11 +7,11 @@ import {
 import { getEverbloomAdminAddress } from "./common";
 
 /*
- * Deploys EverbloomV2 contract to EverbloomAdmin.
+ * Deploys Everbloom2 contract to EverbloomAdmin.
  * @throws Will throw an error if transaction is reverted.
  * @returns {Promise<*>}
  * */
-export const deployEverbloomV2 = async () => {
+export const deployEverbloom2 = async () => {
   const EverbloomAdmin = await getEverbloomAdminAddress();
   await mintFlow(EverbloomAdmin, "10.0");
 
@@ -30,7 +30,7 @@ export const deployEverbloomV2 = async () => {
     MetadataViews: EverbloomAdmin,
   };
 
-  return deployContractByName({ to: EverbloomAdmin, name: "EverbloomV2", addressMap });
+  return deployContractByName({ to: EverbloomAdmin, name: "Everbloom2", addressMap });
 };
 
 /*

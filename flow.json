@@ -43,7 +43,7 @@
       }
     },
     "Everbloom": "./contracts/Everbloom.cdc",
-    "EverbloomV2": "./contracts/EverbloomV2.cdc",
+    "Everbloom2": "./contracts/Everbloom2.cdc",
     "ArtworkMetadata": "./contracts/ArtworkMetadata.cdc",
     "EverbloomMetadata": "./contracts/EverbloomMetadata.cdc"
   },
@@ -64,7 +64,7 @@
         "NonFungibleToken",
         "MetadataViews",
         "Everbloom",
-        "EverbloomV2",
+        "Everbloom2",
         "ArtworkMetadata",
         "EverbloomMetadata"
       ]
