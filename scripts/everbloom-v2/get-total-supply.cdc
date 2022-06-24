@@ -1,7 +1,7 @@
-import EverbloomV2 from "../../contracts/EverbloomV2.cdc"
+import Everbloom2 from "../../contracts/Everbloom2.cdc"
 
-// This scripts returns the number of EverbloomV2 NFTs currently in existence.
+// This scripts returns the number of Everbloom2 NFTs currently in existence.
 
 pub fun main(): UInt64 {
-    return EverbloomV2.totalSupply
+    return Everbloom2.totalSupply
 }

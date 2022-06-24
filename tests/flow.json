@@ -31,7 +31,7 @@
     "ArtworkMetadata": "../contracts/ArtworkMetadata.cdc",
     "EverbloomMetadata": "../contracts/EverbloomMetadata.cdc",
     "Everbloom": "../contracts/Everbloom.cdc",
-    "EverbloomV2": "../contracts/EverbloomV2.cdc"
+    "Everbloom2": "../contracts/Everbloom2.cdc"
   },
   "networks": {
     "emulator": "127.0.0.1:3569",
