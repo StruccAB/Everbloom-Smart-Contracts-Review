@@ -7,19 +7,30 @@ import {
 import { getEverbloomAdminAddress } from "./common";
 
 /*
- * Deploys Everbloom contract to EverbloomAdmin.
+ * Deploys Everbloom2 contract to EverbloomAdmin.
  * @throws Will throw an error if transaction is reverted.
  * @returns {Promise<*>}
  * */
-export const deployEverbloom = async () => {
+export const deployEverbloom2 = async () => {
   const EverbloomAdmin = await getEverbloomAdminAddress();
   await mintFlow(EverbloomAdmin, "10.0");
 
-  await deployContractByName({ to: EverbloomAdmin, name: "NonFungibleToken" });
-  await deployContractByName({ to: EverbloomAdmin, name: "ArtworkMetadata" });
-  const addressMap = { NonFungibleToken: EverbloomAdmin, ArtworkMetadata: EverbloomAdmin };
+  await deployContractByName({ to: EverbloomAdmin, name: "NonFungibleToken", update: true });
+  await deployContractByName({ to: EverbloomAdmin, name: "FungibleToken" });
+  let addressMap = {
+    NonFungibleToken: EverbloomAdmin,
+    FungibleToken: EverbloomAdmin,
 
-  return deployContractByName({ to: EverbloomAdmin, name: "Everbloom", addressMap });
+  }
+  await deployContractByName({ to: EverbloomAdmin, name: "MetadataViews", addressMap });
+  await deployContractByName({ to: EverbloomAdmin, name: "EverbloomMetadata", addressMap: { MetadataViews: EverbloomAdmin } });
+  addressMap = {
+    ...addressMap,
+    EverbloomMetadata: EverbloomAdmin,
+    MetadataViews: EverbloomAdmin,
+  };
+
+  return deployContractByName({ to: EverbloomAdmin, name: "Everbloom2", addressMap });
 };
 
 /*
@@ -29,7 +40,7 @@ export const deployEverbloom = async () => {
  * @returns {Promise<*>}
  * */
 export const setupCollectionOnAccount = async (account) => {
-  const name = "user/setup-collection";
+  const name = "everbloom-v2/user/setup-collection";
 
   const signers = [account];
 
@@ -42,7 +53,7 @@ export const setupCollectionOnAccount = async (account) => {
  * @returns {Promise<*>}
  * */
 export const createMinter = async (account) => {
-  const name = "admin/create-minter";
+  const name = "everbloom-v2/admin/create-minter";
   const signers = [account];
 
   return sendTransaction({ name, signers });
@@ -55,7 +66,7 @@ export const createMinter = async (account) => {
  * @returns {Promise<*>}
  * */
 export const addUserMintingCapability = async (account, userAddress) => {
-  const name = "admin/add-minting-capability";
+  const name = "everbloom-v2/admin/add-minting-capability";
   const signers = [account];
   const args = [userAddress]
 
@@ -68,7 +79,7 @@ export const addUserMintingCapability = async (account, userAddress) => {
  * @returns {Promise<*>}
  * */
 export const createUser = async (account) => {
-  const name = "user/create-user";
+  const name = "everbloom-v2/user/create-user";
   const signers = [account];
 
   return sendTransaction({ name, signers });
@@ -81,7 +92,7 @@ export const createUser = async (account) => {
  * @returns {Promise<*>}
  * */
 export const createGallery = async (account, args) => {
-  const name = "user/create-gallery";
+  const name = "everbloom-v2/user/create-gallery";
   const signers = [account];
 
   return sendTransaction({ name, signers, args });
@@ -94,33 +105,33 @@ export const createGallery = async (account, args) => {
  * @returns {Promise<*>}
  * */
 export const createArtwork = async (account, args) => {
-  const name = "user/create-artwork";
+  const name = "everbloom-v2/user/create-artwork";
   const signers = [account];
 
   return sendTransaction({ name, signers, args });
 };
 
 /*
- * Create edition in a Artwork resource
- * @param {string} account - account address
- * @param {any[]} args - argument for the create edition transaction
- * @returns {Promise<*>}
- * */
-export const createEdition = async (account, args) => {
-  const name = "user/create-edition";
-  const signers = [account];
-
-  return sendTransaction({ name, signers, args });
-};
-
-/*
- * mint Print NFT under an edition in an Artwork resource
+ * mint Print NFT in an Artwork resource
  * @param {string} account - account address
  * @param {any[]} args - argument for the mint print transaction
  * @returns {Promise<*>}
  * */
 export const mintPrint = async (account, args) => {
-  const name = "user/mint-print";
+  const name = "everbloom-v2/user/mint-print";
+  const signers = [account];
+
+  return sendTransaction({ name, signers, args });
+};
+
+/*
+ * invalidate a perk
+ * @param {string} account - account address
+ * @param {any[]} args - argument for the mint print transaction
+ * @returns {Promise<*>}
+ * */
+export const disablePerk = async (account, args) => {
+  const name = "everbloom-v2/admin/disable-perk";
   const signers = [account];
 
   return sendTransaction({ name, signers, args });
@@ -133,7 +144,7 @@ export const mintPrint = async (account, args) => {
  * @returns {Promise<*>}
  * */
 export const transferPrint = async (account, args) => {
-  const name = "user/transfer-print";
+  const name = "everbloom-v2/user/transfer-print";
   const signers = [account];
 
   return sendTransaction({ name, signers, args });
@@ -145,7 +156,7 @@ export const transferPrint = async (account, args) => {
  * @returns {UInt64} - number of NFT minted so far
  * */
 export const getEverblooomSupply = async () => {
-  const name = "get-total-supply";
+  const name = "everbloom-v2/get-total-supply";
 
   return executeScript({ name });
 };
@@ -157,7 +168,7 @@ export const getEverblooomSupply = async () => {
  * @returns {UInt64}
  * */
 export const getPrintCount = async (account) => {
-  const name = "get-collection-length";
+  const name = "everbloom-v2/get-collection-length";
   const args = [account];
 
   return executeScript({ name, args });
@@ -170,8 +181,48 @@ export const getPrintCount = async (account) => {
  * @returns {UInt64}
  * */
 export const getGalleryCount = async (account) => {
-  const name = "get-gallery-length";
+  const name = "everbloom-v2/get-gallery-length";
   const args = [account];
+
+  return executeScript({ name, args });
+};
+
+/*
+ * Returns the Artworks stored on Contract level
+ * @param {number} artworkId - id of the artwork
+ * @throws Will throw an error if execution will be halted
+ * @returns {Object}
+ * */
+export const getArtwork = async (artworkId) => {
+  const name = "everbloom-v2/get-artwork";
+  const args = [artworkId];
+
+  return executeScript({ name, args });
+};
+
+/*
+ * Returns the id of the arwork in the contract using external post id
+ * @param {string} externalPostId - if of the everbloom platform post
+ * @throws Will throw an error if execution will be halted
+ * @returns {UInt64}
+ * */
+export const getArtworkIdByExternalPostId = async (externalPostId) => {
+  const name = "everbloom-v2/get-artwork-id-by-post-id";
+  const args = [externalPostId];
+
+  return executeScript({ name, args });
+};
+
+/*
+ * Returns the number of Artworks in a Gallery
+ * @param {string} account - account address
+ * @param {number} galleryId - id of the gallery
+ * @throws Will throw an error if execution will be halted
+ * @returns {UInt64}
+ * */
+export const getGalleryArtworkCount = async (account, galleryId) => {
+  const name = "everbloom-v2/get-gallery-artwork-length";
+  const args = [account, galleryId];
 
   return executeScript({ name, args });
 };
@@ -184,23 +235,8 @@ export const getGalleryCount = async (account) => {
  * @returns {UInt64}
  * */
 export const getArtworkCount = async (account, galleryId) => {
-  const name = "get-artwork-length";
+  const name = "everbloom-v2/get-artwork-length";
   const args = [account, galleryId];
-
-  return executeScript({ name, args });
-};
-
-/*
- * Returns the number of Editions in an Artwork
- * @param {string} account - account address
- * @param {number} galleryId - id of the gallery
- * @param {number} artworkId - id of the artwork
- * @throws Will throw an error if execution will be halted
- * @returns {UInt64}
- * */
-export const getEditionCount = async (account, galleryId, artworkId) => {
-  const name = "get-edition-length";
-  const args = [account, galleryId, artworkId];
 
   return executeScript({ name, args });
 };
@@ -212,7 +248,7 @@ export const getEditionCount = async (account, galleryId, artworkId) => {
  * @returns {UInt64}
  * */
 export const getLastGalleryId = async (account) => {
-  const name = "get-last-gallery-of-user";
+  const name = "everbloom-v2/get-last-gallery-of-user";
   const args = [account];
 
   return executeScript({ name, args });
@@ -226,23 +262,8 @@ export const getLastGalleryId = async (account) => {
  * @returns {UInt64}
  * */
 export const getLastArtworkId = async (account, galleryId) => {
-  const name = "get-last-artwork-of-gallery";
+  const name = "everbloom-v2/get-last-artwork-of-gallery";
   const args = [account, galleryId];
-
-  return executeScript({ name, args });
-};
-
-/*
- * Returns the last edition id of Artwork.
- * @param {string} account - account address
- * @param {number} galleryId - id of the gallery
- * @param {number} artworkId - id of the artwork
- * @throws Will throw an error if execution will be halted
- * @returns {UInt64}
- * */
-export const getLastEditionId = async (account, galleryId, artworkId) => {
-  const name = "get-last-edition-of-artwork";
-  const args = [account, galleryId, artworkId];
 
   return executeScript({ name, args });
 };
@@ -254,8 +275,63 @@ export const getLastEditionId = async (account, galleryId, artworkId) => {
  * @returns {UInt64}
  * */
 export const getLastPrintId = async (account) => {
-  const name = "get-last-print-of-gallery";
+  const name = "everbloom-v2/get-last-print-of-gallery";
   const args = [account];
+
+  return executeScript({ name, args });
+};
+
+/*
+ * Returns the print id of Everbloom contract using Print id of the Everbloom Platform.
+ * @param {string} externalPrintId - print id of the everbloom platform
+ * @throws Will throw an error if execution will be halted
+ * @returns {UInt64}
+ * */
+export const  getNftIdByExternalPrintId = async (externalPrintId) => {
+  const name = "everbloom-v2/get-nft-id-by-external-print-id";
+  const args = [externalPrintId];
+
+  return executeScript({ name, args });
+};
+
+/*
+ * Returns the MetadataViews.Display object iof the NFT metadata
+ * @param {string} account - account address
+ * @param {number} printId - id of the print
+ * @throws Will throw an error if execution will be halted
+ * @returns {UInt64}
+ * */
+export const getNftMetadata = async (account, printId) => {
+  const name = "everbloom-v2/get-nft-metadata";
+  const args = [account, printId];
+
+  return executeScript({ name, args });
+};
+
+/*
+ * Returns the EverbloomMetadata.EverbloomMetadataView object iof the NFT metadata
+ * @param {string} account - account address
+ * @param {number} printId - id of the print
+ * @throws Will throw an error if execution will be halted
+ * @returns {UInt64}
+ * */
+export const getPrintMetadata = async (account, printId) => {
+  const name = "everbloom-v2/get-print-metadata";
+  const args = [account, printId];
+
+  return executeScript({ name, args });
+};
+
+/*
+ * Returns the EverbloomMetadata.EverbloomMetadataView object iof the NFT metadata
+ * @param {string} account - account address
+ * @param {number} printId - id of the print
+ * @throws Will throw an error if execution will be halted
+ * @returns {UInt64}
+ * */
+export const getNftPerksMetadata = async (account, printId) => {
+  const name = "everbloom-v2/get-nft-perks";
+  const args = [account, printId];
 
   return executeScript({ name, args });
 };

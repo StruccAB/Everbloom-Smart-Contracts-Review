@@ -36,12 +36,17 @@ Everbloom was founded with the mission of enabling anyone to express themselves 
 1. Create a `User` resource instance and store it in account storage.
 2. get `Minter` capability from Admin and store it in `User` resource   
 3. Create a `Gallery` resource instance and store it in `User` resource 
-4. Create an `Art` resource and store it in `Gallery` resource
-5. Create an `Edition` struct instance inside `Art` resource
+4. Create an `Art` and store it in `Gallery` resource
+5. (Everbloom only)Create an `Edition` struct instance inside `Art` resource
 6. Mint a `Print` (NFT) under an edition in an Art
 
 ### Collection Setup
 1. Execute `setup-collection.cdc` transaction
+
+## Deployment
+
+- Testnet ```0x84d3e0bf16529c09```
+- Mainnet ```0xe703f7fee6400754```
 
 ## Deployment on Emulator
 
