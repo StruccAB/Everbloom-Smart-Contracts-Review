@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 // This contracts contains Metadata structs for Everbloom
-import MetadataViews from "./MetadataViews.cdc"
+import MetadataViews from 0x1d7e57aa55817448
 
 pub contract EverbloomMetadata {
 	pub struct Perk {
